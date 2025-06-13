@@ -14,8 +14,5 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <BrowserRouter basename={basename}>
       <App />
     </BrowserRouter>
-    <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl">
-      Header 1
-    </h1>
   </React.StrictMode>,
 );
