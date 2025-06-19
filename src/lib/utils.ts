@@ -34,8 +34,8 @@ export interface UnitPreferences {
 }
 
 export const defaultUnitPreferences: UnitPreferences = {
-  distance: "metric",
-  elevation: "metric",
+  distance: "imperial",
+  elevation: "imperial",
   fluid: "metric",
   weight: "metric",
 };

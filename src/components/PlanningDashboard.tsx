@@ -30,7 +30,7 @@ const parseEstimatedTimeToHours = (timeString: string): number => {
 const PlanningDashboard: React.FC<PlanningDashboardProps> = ({
   raceDetails = {
     distance: 50,
-    elevationGain: 3000,
+    elevationGain: 18000,
     estimatedTime: "10:00:00",
     aidStations: [
       { name: "Aid Station 1", distance: 10 },
@@ -40,7 +40,7 @@ const PlanningDashboard: React.FC<PlanningDashboardProps> = ({
     ],
     unitPreferences: {
       distance: "metric",
-      elevation: "metric",
+      elevation: "imperial",
       fluid: "metric",
       weight: "metric",
     },

@@ -135,11 +135,7 @@ const RaceProfileForm: React.FC<RaceProfileFormProps> = ({
               <div className="flex gap-2">
                 <Input
                   id="distance"
-                  placeholder={
-                    unitPreferences.distance === "metric"
-                      ? "e.g. 100 km"
-                      : "e.g. 62 miles"
-                  }
+                  placeholder="e.g. 100 mi"
                   value={distance}
                   onChange={(e) => setDistance(e.target.value)}
                   required
