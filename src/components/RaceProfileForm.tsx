@@ -9,7 +9,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Trash2 } from "lucide-react";
+
 import { Separator } from "@/components/ui/separator";
 import {
   UnitPreferences,
@@ -18,23 +18,18 @@ import {
 } from "@/lib/utils";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
-interface AidStation {
-  id: string;
-  name: string;
-  distance: string;
-  elevation: string;
-}
-
 interface RaceProfileFormProps {
   onSubmit?: (raceProfile: RaceProfile) => void;
 }
 
 export interface RaceProfile {
   raceName: string;
+  raceDate: string;
+  startTime: string;
   distance: string;
   elevationGain: string;
   estimatedTime: string;
-  aidStations: AidStation[];
+
   unitPreferences: UnitPreferences;
 }
 
@@ -42,14 +37,14 @@ const RaceProfileForm: React.FC<RaceProfileFormProps> = ({
   onSubmit = () => {},
 }) => {
   const [raceName, setRaceName] = useState<string>("");
+  const [raceDate, setRaceDate] = useState<string>("");
+  const [startTime, setStartTime] = useState<string>("");
   const [distance, setDistance] = useState<string>("");
   const [elevationGain, setElevationGain] = useState<string>("");
   const [hours, setHours] = useState<string>("");
   const [minutes, setMinutes] = useState<string>("");
   const [seconds, setSeconds] = useState<string>("");
-  const [aidStations, setAidStations] = useState<AidStation[]>([
-    { id: "1", name: "", distance: "", elevation: "" },
-  ]);
+
   const [unitPreferences, setUnitPreferences] = useState<UnitPreferences>(
     defaultUnitPreferences,
   );
@@ -64,31 +59,6 @@ const RaceProfileForm: React.FC<RaceProfileFormProps> = ({
     }));
   };
 
-  const handleAddAidStation = () => {
-    setAidStations([
-      ...aidStations,
-      { id: Date.now().toString(), name: "", distance: "", elevation: "" },
-    ]);
-  };
-
-  const handleRemoveAidStation = (id: string) => {
-    if (aidStations.length > 1) {
-      setAidStations(aidStations.filter((station) => station.id !== id));
-    }
-  };
-
-  const updateAidStation = (
-    id: string,
-    field: keyof AidStation,
-    value: string,
-  ) => {
-    setAidStations(
-      aidStations.map((station) =>
-        station.id === id ? { ...station, [field]: value } : station,
-      ),
-    );
-  };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Format the time as HH:MM:SS
@@ -99,10 +69,12 @@ const RaceProfileForm: React.FC<RaceProfileFormProps> = ({
 
     const raceProfile: RaceProfile = {
       raceName,
+      raceDate,
+      startTime,
       distance,
       elevationGain,
       estimatedTime,
-      aidStations,
+
       unitPreferences,
     };
     onSubmit(raceProfile);
@@ -127,6 +99,26 @@ const RaceProfileForm: React.FC<RaceProfileFormProps> = ({
                 placeholder="e.g. Western States 100"
                 value={raceName}
                 onChange={(e) => setRaceName(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="raceDate">Race Date</Label>
+              <Input
+                id="raceDate"
+                type="date"
+                value={raceDate}
+                onChange={(e) => setRaceDate(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="startTime">Start Time</Label>
+              <Input
+                id="startTime"
+                type="time"
+                value={startTime}
+                onChange={(e) => setStartTime(e.target.value)}
                 required
               />
             </div>
@@ -311,113 +303,9 @@ const RaceProfileForm: React.FC<RaceProfileFormProps> = ({
             </div>
           </div>
 
-          <Separator className="my-4" />
-
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <Label className="text-lg font-medium">Aid Stations</Label>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleAddAidStation}
-                className="flex items-center gap-1"
-              >
-                <PlusCircle className="h-4 w-4" /> Add Station
-              </Button>
-            </div>
-
-            <div className="space-y-4">
-              {aidStations.map((station, index) => (
-                <div
-                  key={station.id}
-                  className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end border p-4 rounded-md"
-                >
-                  <div className="md:col-span-4 space-y-2">
-                    <Label htmlFor={`station-name-${station.id}`}>Name</Label>
-                    <Input
-                      id={`station-name-${station.id}`}
-                      placeholder="Aid Station Name"
-                      value={station.name}
-                      onChange={(e) =>
-                        updateAidStation(station.id, "name", e.target.value)
-                      }
-                    />
-                  </div>
-                  <div className="md:col-span-3 space-y-2">
-                    <Label htmlFor={`station-distance-${station.id}`}>
-                      Distance
-                    </Label>
-                    <div className="flex gap-2">
-                      <Input
-                        id={`station-distance-${station.id}`}
-                        placeholder={
-                          unitPreferences.distance === "metric"
-                            ? "e.g. 25.4"
-                            : "e.g. 15.8"
-                        }
-                        value={station.distance}
-                        onChange={(e) =>
-                          updateAidStation(
-                            station.id,
-                            "distance",
-                            e.target.value,
-                          )
-                        }
-                        className="flex-1"
-                      />
-                      <div className="flex items-center text-sm text-gray-500 w-8">
-                        {unitPreferences.distance === "metric" ? "km" : "mi"}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="md:col-span-3 space-y-2">
-                    <Label htmlFor={`station-elevation-${station.id}`}>
-                      Elevation
-                    </Label>
-                    <div className="flex gap-2">
-                      <Input
-                        id={`station-elevation-${station.id}`}
-                        placeholder={
-                          unitPreferences.elevation === "metric"
-                            ? "e.g. 1200"
-                            : "e.g. 5280"
-                        }
-                        value={station.elevation}
-                        onChange={(e) =>
-                          updateAidStation(
-                            station.id,
-                            "elevation",
-                            e.target.value,
-                          )
-                        }
-                        className="flex-1"
-                      />
-                      <div className="flex items-center text-sm text-gray-500 w-8">
-                        {unitPreferences.elevation === "metric" ? "m" : "ft"}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="md:col-span-2 flex justify-end">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleRemoveAidStation(station.id)}
-                      disabled={aidStations.length === 1}
-                      className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                    >
-                      <Trash2 className="h-5 w-5" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
           <div className="flex justify-end">
             <Button type="submit" className="px-6">
-              Generate Plan
+              Next: Nutrition Planning
             </Button>
           </div>
         </form>
