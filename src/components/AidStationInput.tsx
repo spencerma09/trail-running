@@ -102,17 +102,8 @@ const AidStationInput: React.FC<AidStationInputProps> = ({
         </div>
 
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div>
             <Label className="text-lg font-medium">Manual Entry</Label>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleAddAidStation}
-              className="flex items-center gap-1"
-            >
-              <PlusCircle className="h-4 w-4" /> Add Station
-            </Button>
           </div>
 
           <div className="space-y-4">
@@ -193,6 +184,18 @@ const AidStationInput: React.FC<AidStationInputProps> = ({
                 </div>
               </div>
             ))}
+          </div>
+
+          <div className="flex justify-center">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleAddAidStation}
+              className="flex items-center gap-1"
+            >
+              <PlusCircle className="h-4 w-4" /> Add Station
+            </Button>
           </div>
         </div>
 

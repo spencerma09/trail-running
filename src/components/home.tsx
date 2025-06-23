@@ -99,7 +99,55 @@ export default function Home() {
     <div className={`min-h-screen bg-background ${darkMode ? "dark" : ""}`}>
       <div className="container mx-auto px-4 py-8">
         <header className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">Ultra Runner Planner</h1>
+          <div className="flex items-center gap-4">
+            <h1 className="text-3xl font-bold">Ultra Runner Planner</h1>
+            {/* Progress indicator */}
+            <div className="hidden md:flex items-center gap-2 text-sm text-muted-foreground">
+              <span
+                className={
+                  currentStep === "race-details"
+                    ? "text-primary font-medium"
+                    : ""
+                }
+              >
+                1. Race Details
+              </span>
+              <span>→</span>
+              <span
+                className={
+                  currentStep === "nutrition" ? "text-primary font-medium" : ""
+                }
+              >
+                2. Nutrition
+              </span>
+              <span>→</span>
+              <span
+                className={
+                  currentStep === "aid-stations"
+                    ? "text-primary font-medium"
+                    : ""
+                }
+              >
+                3. Aid Stations
+              </span>
+              <span>→</span>
+              <span
+                className={
+                  currentStep === "review" ? "text-primary font-medium" : ""
+                }
+              >
+                4. Review
+              </span>
+              <span>→</span>
+              <span
+                className={
+                  currentStep === "report" ? "text-primary font-medium" : ""
+                }
+              >
+                5. Report
+              </span>
+            </div>
+          </div>
           <Button variant="ghost" size="icon" onClick={toggleDarkMode}>
             {darkMode ? (
               <SunIcon className="h-5 w-5" />
@@ -109,21 +157,32 @@ export default function Home() {
           </Button>
         </header>
 
-        <main>
+        <main className="max-w-4xl mx-auto">
           {currentStep === "race-details" && (
-            <section className="mb-8">
-              <h2 className="text-2xl font-semibold mb-4">
-                Step 1: Race Details
-              </h2>
+            <div className="space-y-6">
+              <div className="text-center">
+                <h2 className="text-2xl font-semibold mb-2">
+                  Step 1: Race Details
+                </h2>
+                <p className="text-muted-foreground">
+                  Enter your race information to get started with your
+                  personalized plan
+                </p>
+              </div>
               <RaceProfileForm onSubmit={handleRaceProfileSubmit} />
-            </section>
+            </div>
           )}
 
           {currentStep === "nutrition" && raceProfile && (
-            <section className="mb-8">
-              <h2 className="text-2xl font-semibold mb-4">
-                Step 2: Nutrition Planning
-              </h2>
+            <div className="space-y-6">
+              <div className="text-center">
+                <h2 className="text-2xl font-semibold mb-2">
+                  Step 2: Nutrition Planning
+                </h2>
+                <p className="text-muted-foreground">
+                  Set your target nutrition intake based on your race duration
+                </p>
+              </div>
               <NutritionSliders
                 estimatedTime={parseEstimatedTimeToHours(
                   raceProfile.estimatedTime,
@@ -131,27 +190,37 @@ export default function Home() {
                 onNext={handleNutritionNext}
                 onBack={handleBack}
               />
-            </section>
+            </div>
           )}
 
           {currentStep === "aid-stations" && raceProfile && (
-            <section className="mb-8">
-              <h2 className="text-2xl font-semibold mb-4">
-                Step 3: Aid Stations
-              </h2>
+            <div className="space-y-6">
+              <div className="text-center">
+                <h2 className="text-2xl font-semibold mb-2">
+                  Step 3: Aid Stations
+                </h2>
+                <p className="text-muted-foreground">
+                  Define your aid station locations and distances
+                </p>
+              </div>
               <AidStationInput
                 unitPreferences={raceProfile.unitPreferences}
                 onNext={handleAidStationsNext}
                 onBack={handleBack}
               />
-            </section>
+            </div>
           )}
 
           {currentStep === "review" && raceProfile && nutritionPlan && (
-            <section className="mb-8">
-              <h2 className="text-2xl font-semibold mb-4">
-                Step 4: Review Aid Stations
-              </h2>
+            <div className="space-y-6">
+              <div className="text-center">
+                <h2 className="text-2xl font-semibold mb-2">
+                  Step 4: Review Aid Stations
+                </h2>
+                <p className="text-muted-foreground">
+                  Fine-tune timing and nutrition for each aid station
+                </p>
+              </div>
               <AidStationCarousel
                 aidStations={aidStations}
                 nutritionPlan={nutritionPlan}
@@ -161,14 +230,19 @@ export default function Home() {
                 onNext={handleReviewNext}
                 onBack={handleBack}
               />
-            </section>
+            </div>
           )}
 
           {currentStep === "report" && raceProfile && nutritionPlan && (
-            <section className="mb-8">
-              <h2 className="text-2xl font-semibold mb-4">
-                Step 5: Race Plan Report
-              </h2>
+            <div className="space-y-6">
+              <div className="text-center">
+                <h2 className="text-2xl font-semibold mb-2">
+                  Step 5: Race Plan Report
+                </h2>
+                <p className="text-muted-foreground">
+                  Your complete race strategy is ready
+                </p>
+              </div>
               <ReportGenerator
                 raceProfile={raceProfile}
                 nutritionPlan={nutritionPlan}
@@ -176,7 +250,7 @@ export default function Home() {
                 onBack={handleBack}
                 onStartOver={handleStartOver}
               />
-            </section>
+            </div>
           )}
         </main>
 

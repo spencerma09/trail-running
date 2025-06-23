@@ -188,6 +188,27 @@ const ReportGenerator: React.FC<ReportGeneratorProps> = ({
                     <TableCell>{station.nutritionNeeded.water}ml</TableCell>
                   </TableRow>
                 ))}
+                {/* Finish Line Entry */}
+                <TableRow className="bg-muted/50">
+                  <TableCell className="font-medium">🏁 Finish Line</TableCell>
+                  <TableCell>
+                    {formatDistance(
+                      parseFloat(raceProfile.distance),
+                      raceProfile.unitPreferences.distance,
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {(() => {
+                      const [hours, minutes, seconds] =
+                        raceProfile.estimatedTime.split(":").map(Number);
+                      const totalHours = hours + minutes / 60 + seconds / 3600;
+                      return formatTime(totalHours);
+                    })()}
+                  </TableCell>
+                  <TableCell>{nutritionPlan.totalCarbs}g</TableCell>
+                  <TableCell>{nutritionPlan.totalSodium}mg</TableCell>
+                  <TableCell>{nutritionPlan.totalWater}ml</TableCell>
+                </TableRow>
               </TableBody>
             </Table>
           </div>
