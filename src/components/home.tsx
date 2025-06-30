@@ -1,7 +1,17 @@
-import React, { useState } from "react";
-import { MoonIcon, SunIcon } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { MoonIcon, SunIcon, User, LogOut } from "lucide-react";
 import { Button } from "./ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+import { Separator } from "./ui/separator";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "./ui/dialog";
 import RaceProfileForm, {
   RaceProfile as RaceProfileType,
 } from "./RaceProfileForm";
@@ -10,6 +20,7 @@ import AidStationInput from "./AidStationInput";
 import AidStationCarousel from "./AidStationCarousel";
 import ReportGenerator from "./ReportGenerator";
 import { UnitPreferences } from "@/lib/utils";
+import { supabase } from "@/lib/supabase";
 
 interface AidStation {
   id: string;
@@ -41,8 +52,167 @@ export default function Home() {
     AidStationWithTiming[]
   >([]);
 
+  // Authentication state
+  const [user, setUser] = useState<any>(null);
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
+  const [authMode, setAuthMode] = useState<"login" | "signup" | "reset">(
+    "login",
+  );
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
+  };
+
+  // Authentication functions
+  useEffect(() => {
+    // Get current user
+    const getCurrentUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      setUser(user);
+    };
+    getCurrentUser();
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user || null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleEmailAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setAuthError(null);
+
+    try {
+      if (authMode === "login") {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        if (error) {
+          // Provide more specific error messages
+          if (error.message.includes("Invalid login credentials")) {
+            throw new Error(
+              "Invalid email or password. Please check your credentials and try again.",
+            );
+          }
+          if (error.message.includes("Email not confirmed")) {
+            throw new Error(
+              "Please check your email and click the confirmation link before signing in.",
+            );
+          }
+          throw error;
+        }
+        setShowAuthDialog(false);
+        setEmail("");
+        setPassword("");
+      } else if (authMode === "signup") {
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: window.location.origin,
+          },
+        });
+        if (error) {
+          if (error.message.includes("User already registered")) {
+            throw new Error(
+              "An account with this email already exists. Please sign in instead.",
+            );
+          }
+          throw error;
+        }
+
+        // Check if email confirmation is required
+        if (data.user && !data.session) {
+          setAuthError(
+            "Please check your email and click the confirmation link to complete your registration.",
+          );
+        } else {
+          setAuthError("Account created successfully! You can now sign in.");
+        }
+        setShowAuthDialog(false);
+        setEmail("");
+        setPassword("");
+      } else if (authMode === "reset") {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: window.location.origin,
+        });
+        if (error) throw error;
+
+        setAuthError(
+          "Password reset email sent! Please check your email for instructions.",
+        );
+        setShowAuthDialog(false);
+        setEmail("");
+        setPassword("");
+      }
+    } catch (error: any) {
+      console.error("Auth error:", error);
+      setAuthError(error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleAuth = async () => {
+    setIsLoading(true);
+    setAuthError(null);
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: window.location.origin,
+        },
+      });
+      if (error) {
+        console.error("Google OAuth error:", error);
+        throw error;
+      }
+      console.log("Google OAuth initiated:", data);
+    } catch (error: any) {
+      console.error("Google auth error:", error);
+      setAuthError(`Google authentication failed: ${error.message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleFacebookAuth = async () => {
+    setIsLoading(true);
+    setAuthError(null);
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "facebook",
+        options: {
+          redirectTo: window.location.origin,
+        },
+      });
+      if (error) {
+        console.error("Facebook OAuth error:", error);
+        throw error;
+      }
+      console.log("Facebook OAuth initiated:", data);
+    } catch (error: any) {
+      console.error("Facebook auth error:", error);
+      setAuthError(`Facebook authentication failed: ${error.message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
   };
 
   const parseEstimatedTimeToHours = (timeString: string): number => {
@@ -100,7 +270,7 @@ export default function Home() {
       <div className="container mx-auto px-4 py-8">
         <header className="flex justify-between items-center mb-8">
           <div className="flex items-center gap-4">
-            <h1 className="text-3xl font-bold">Ultra Runner Planner</h1>
+            <h1 className="text-3xl font-bold">Trailpa</h1>
             {/* Progress indicator */}
             <div className="hidden md:flex items-center gap-2 text-sm text-muted-foreground">
               <span
@@ -148,13 +318,185 @@ export default function Home() {
               </span>
             </div>
           </div>
-          <Button variant="ghost" size="icon" onClick={toggleDarkMode}>
-            {darkMode ? (
-              <SunIcon className="h-5 w-5" />
+          <div className="flex items-center gap-2">
+            {user ? (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">
+                  {user.email}
+                </span>
+                <Button variant="ghost" size="sm" onClick={handleSignOut}>
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sign Out
+                </Button>
+              </div>
             ) : (
-              <MoonIcon className="h-5 w-5" />
+              <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
+                <DialogTrigger asChild>
+                  <Button variant="outline">
+                    <User className="h-4 w-4 mr-2" />
+                    Login
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>
+                      {authMode === "login"
+                        ? "Sign In"
+                        : authMode === "signup"
+                          ? "Create Account"
+                          : "Reset Password"}
+                    </DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    {/* Social Auth Buttons - only show for login/signup */}
+                    {authMode !== "reset" && (
+                      <div className="space-y-2">
+                        <Button
+                          variant="outline"
+                          className="w-full"
+                          onClick={handleGoogleAuth}
+                          disabled={isLoading}
+                        >
+                          Continue with Google
+                        </Button>
+                        <Button
+                          variant="outline"
+                          className="w-full"
+                          onClick={handleFacebookAuth}
+                          disabled={isLoading}
+                        >
+                          Continue with Facebook
+                        </Button>
+                      </div>
+                    )}
+
+                    {/* Separator - only show for login/signup */}
+                    {authMode !== "reset" && (
+                      <div className="relative">
+                        <div className="absolute inset-0 flex items-center">
+                          <Separator className="w-full" />
+                        </div>
+                        <div className="relative flex justify-center text-xs uppercase">
+                          <span className="bg-background px-2 text-muted-foreground">
+                            Or continue with email
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Email Auth Form */}
+                    <form onSubmit={handleEmailAuth} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="email">Email</Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          placeholder="Enter your email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          required
+                        />
+                      </div>
+                      {/* Password field - not needed for reset */}
+                      {authMode !== "reset" && (
+                        <div className="space-y-2">
+                          <Label htmlFor="password">Password</Label>
+                          <Input
+                            id="password"
+                            type="password"
+                            placeholder="Enter your password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                          />
+                        </div>
+                      )}
+
+                      {authError && (
+                        <div
+                          className={`text-sm p-2 rounded ${
+                            authError.includes("check your email")
+                              ? "text-blue-600 bg-blue-50"
+                              : "text-red-600 bg-red-50"
+                          }`}
+                        >
+                          {authError}
+                        </div>
+                      )}
+
+                      <Button
+                        type="submit"
+                        className="w-full"
+                        disabled={isLoading}
+                      >
+                        {isLoading
+                          ? "Loading..."
+                          : authMode === "login"
+                            ? "Sign In"
+                            : authMode === "signup"
+                              ? "Create Account"
+                              : "Send Reset Email"}
+                      </Button>
+                    </form>
+
+                    <div className="text-center text-sm space-y-2">
+                      {authMode === "reset" ? (
+                        <button
+                          type="button"
+                          className="text-primary hover:underline"
+                          onClick={() => {
+                            setAuthMode("login");
+                            setAuthError(null);
+                          }}
+                        >
+                          Back to Sign In
+                        </button>
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            className="text-primary hover:underline"
+                            onClick={() => {
+                              setAuthMode(
+                                authMode === "login" ? "signup" : "login",
+                              );
+                              setAuthError(null);
+                            }}
+                          >
+                            {authMode === "login"
+                              ? "Don't have an account? Sign up"
+                              : "Already have an account? Sign in"}
+                          </button>
+                          {authMode === "login" && (
+                            <div>
+                              <button
+                                type="button"
+                                className="text-muted-foreground hover:text-primary text-xs"
+                                onClick={() => {
+                                  setAuthMode("reset");
+                                  setAuthError(null);
+                                }}
+                              >
+                                Forgot your password?
+                              </button>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
             )}
-          </Button>
+
+            <Button variant="ghost" size="icon" onClick={toggleDarkMode}>
+              {darkMode ? (
+                <SunIcon className="h-5 w-5" />
+              ) : (
+                <MoonIcon className="h-5 w-5" />
+              )}
+            </Button>
+          </div>
         </header>
 
         <main className="max-w-4xl mx-auto">
@@ -255,10 +597,7 @@ export default function Home() {
         </main>
 
         <footer className="mt-12 text-center text-sm text-muted-foreground">
-          <p>
-            © {new Date().getFullYear()} Ultra Runner Planner. All rights
-            reserved.
-          </p>
+          <p>© {new Date().getFullYear()} Trailpa. All rights reserved.</p>
         </footer>
       </div>
     </div>

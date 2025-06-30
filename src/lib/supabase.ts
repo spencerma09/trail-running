@@ -55,20 +55,22 @@ export class RaceDataStorage {
     nutritionPlan?: NutritionPlan,
   ): Promise<string | null> {
     try {
+      const insertData = {
+        user_id: userId,
+        race_name: raceProfile.raceName,
+        race_date: raceProfile.raceDate,
+        start_time: raceProfile.startTime,
+        distance: parseFloat(raceProfile.distance),
+        elevation_gain: parseFloat(raceProfile.elevationGain),
+        estimated_time: raceProfile.estimatedTime,
+        unit_preferences: raceProfile.unitPreferences || {},
+        aid_stations: aidStations || [],
+        nutrition_plan: nutritionPlan || null,
+      };
+
       const { data, error } = await supabase
         .from("saved_races")
-        .insert({
-          user_id: userId,
-          race_name: raceProfile.raceName,
-          race_date: raceProfile.raceDate,
-          start_time: raceProfile.startTime,
-          distance: parseFloat(raceProfile.distance),
-          elevation_gain: parseFloat(raceProfile.elevationGain),
-          estimated_time: raceProfile.estimatedTime,
-          unit_preferences: raceProfile.unitPreferences,
-          aid_stations: aidStations || [],
-          nutrition_plan: nutritionPlan,
-        })
+        .insert(insertData)
         .select("id")
         .single();
 

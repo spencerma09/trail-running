@@ -12,6 +12,8 @@ import {
   Trash2,
   Save,
   FolderOpen,
+  Check,
+  Calculator,
 } from "lucide-react";
 import { NutritionPlan } from "./NutritionSliders";
 import { UnitPreferences, formatDistance } from "@/lib/utils";
@@ -375,6 +377,55 @@ const AidStationCarousel: React.FC<AidStationCarouselProps> = ({
   const prevStation = () => {
     if (currentStationIndex > 0) {
       setCurrentStationIndex(currentStationIndex - 1);
+    }
+  };
+
+  // Calculate total nutrition from current station's items
+  const calculateTotalNutrition = () => {
+    const items = getCurrentNutritionItems();
+    return items.reduce(
+      (total, item) => ({
+        carbs: total.carbs + item.carbs * item.quantity,
+        sodium: total.sodium + item.sodium * item.quantity,
+        water: total.water + item.water * item.quantity,
+      }),
+      { carbs: 0, sodium: 0, water: 0 },
+    );
+  };
+
+  // Calculate remaining nutrition needed to reach next station
+  const calculateRemainingNutrition = () => {
+    const totalNutrition = calculateTotalNutrition();
+    let targetNutrition = { carbs: 0, sodium: 0, water: 0 };
+
+    if (currentStationIndex < allStations.length - 1) {
+      if (isStartStation && stationsWithTiming.length > 0) {
+        targetNutrition = stationsWithTiming[0].nutritionNeeded;
+      } else if (
+        !isStartStation &&
+        currentStationIndex < stationsWithTiming.length
+      ) {
+        targetNutrition =
+          stationsWithTiming[currentStationIndex].nutritionNeeded;
+      }
+    }
+
+    return {
+      carbs: Math.max(0, targetNutrition.carbs - totalNutrition.carbs),
+      sodium: Math.max(0, targetNutrition.sodium - totalNutrition.sodium),
+      water: Math.max(0, targetNutrition.water - totalNutrition.water),
+    };
+  };
+
+  // Submit/confirm a nutrition item
+  const submitNutritionItem = (itemId: string) => {
+    // For now, this just validates that the item has a name
+    // In the future, this could save to database or mark as confirmed
+    const items = getCurrentNutritionItems();
+    const item = items.find((i) => i.id === itemId);
+    if (item && item.name.trim()) {
+      // Item is valid and submitted
+      console.log("Item submitted:", item);
     }
   };
 
@@ -818,13 +869,23 @@ const AidStationCarousel: React.FC<AidStationCarouselProps> = ({
                       }
                       className="flex-1 mr-2"
                     />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => removeNutritionItem(item.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => submitNutritionItem(item.id)}
+                        disabled={!item.name.trim()}
+                      >
+                        <Check className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => removeNutritionItem(item.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
                     <div className="space-y-1">
@@ -846,45 +907,54 @@ const AidStationCarousel: React.FC<AidStationCarouselProps> = ({
                       <Label className="text-xs">Carbs (g)</Label>
                       <Input
                         type="number"
-                        value={item.carbs}
+                        value={item.carbs === 0 ? "" : item.carbs}
                         onChange={(e) =>
                           updateNutritionItem(
                             item.id,
                             "carbs",
-                            parseInt(e.target.value) || 0,
+                            e.target.value === ""
+                              ? 0
+                              : parseInt(e.target.value) || 0,
                           )
                         }
                         className="text-sm"
+                        placeholder="0"
                       />
                     </div>
                     <div className="space-y-1">
                       <Label className="text-xs">Sodium (mg)</Label>
                       <Input
                         type="number"
-                        value={item.sodium}
+                        value={item.sodium === 0 ? "" : item.sodium}
                         onChange={(e) =>
                           updateNutritionItem(
                             item.id,
                             "sodium",
-                            parseInt(e.target.value) || 0,
+                            e.target.value === ""
+                              ? 0
+                              : parseInt(e.target.value) || 0,
                           )
                         }
                         className="text-sm"
+                        placeholder="0"
                       />
                     </div>
                     <div className="space-y-1">
                       <Label className="text-xs">Water (ml)</Label>
                       <Input
                         type="number"
-                        value={item.water}
+                        value={item.water === 0 ? "" : item.water}
                         onChange={(e) =>
                           updateNutritionItem(
                             item.id,
                             "water",
-                            parseInt(e.target.value) || 0,
+                            e.target.value === ""
+                              ? 0
+                              : parseInt(e.target.value) || 0,
                           )
                         }
                         className="text-sm"
+                        placeholder="0"
                       />
                     </div>
                     <div className="space-y-1">
@@ -903,6 +973,114 @@ const AidStationCarousel: React.FC<AidStationCarouselProps> = ({
                   No nutrition items added yet. Click "Add Item" to start
                   planning.
                 </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Nutrition Calculator */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Calculator className="h-5 w-5" />
+              Nutrition Calculator
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Track your total nutrition and remaining needs for the next
+              station
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Total Nutrition */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">Total Food Items</CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    Combined nutrition from all items at this station
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-blue-600">
+                        {calculateTotalNutrition().carbs}g
+                      </div>
+                      <div className="text-sm text-muted-foreground">Carbs</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-orange-600">
+                        {calculateTotalNutrition().sodium}mg
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        Sodium
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-cyan-600">
+                        {calculateTotalNutrition().water}ml
+                      </div>
+                      <div className="text-sm text-muted-foreground">Water</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Remaining Nutrition */}
+              {currentStationIndex < allStations.length - 1 && (
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base">
+                      Remaining to Target
+                    </CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                      Additional nutrition needed to reach next station
+                    </p>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-blue-600">
+                          {calculateRemainingNutrition().carbs}g
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          Carbs
+                        </div>
+                        {calculateRemainingNutrition().carbs === 0 && (
+                          <div className="text-xs text-green-600 mt-1">
+                            ✓ Target met
+                          </div>
+                        )}
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-orange-600">
+                          {calculateRemainingNutrition().sodium}mg
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          Sodium
+                        </div>
+                        {calculateRemainingNutrition().sodium === 0 && (
+                          <div className="text-xs text-green-600 mt-1">
+                            ✓ Target met
+                          </div>
+                        )}
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-cyan-600">
+                          {calculateRemainingNutrition().water}ml
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          Water
+                        </div>
+                        {calculateRemainingNutrition().water === 0 && (
+                          <div className="text-xs text-green-600 mt-1">
+                            ✓ Target met
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               )}
             </div>
           </CardContent>
