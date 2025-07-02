@@ -172,7 +172,7 @@ export default function Home() {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: window.location.origin,
+          redirectTo: `${window.location.origin}/auth/callback`,
         },
       });
       if (error) {
@@ -195,7 +195,7 @@ export default function Home() {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "facebook",
         options: {
-          redirectTo: window.location.origin,
+          redirectTo: `${window.location.origin}/auth/callback`,
         },
       });
       if (error) {
@@ -270,7 +270,7 @@ export default function Home() {
       <div className="container mx-auto px-4 py-8">
         <header className="flex justify-between items-center mb-8">
           <div className="flex items-center gap-4">
-            <h1 className="text-3xl font-bold">Trailpa</h1>
+            <h1 className="text-3xl font-bold">UltraSherpa</h1>
             {/* Progress indicator */}
             <div className="hidden md:flex items-center gap-2 text-sm text-muted-foreground">
               <span
@@ -597,7 +597,7 @@ export default function Home() {
         </main>
 
         <footer className="mt-12 text-center text-sm text-muted-foreground">
-          <p>© {new Date().getFullYear()} Trailpa. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} UltraSherpa. All rights reserved.</p>
         </footer>
       </div>
     </div>
