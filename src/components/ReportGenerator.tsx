@@ -235,6 +235,22 @@ const ReportGenerator: React.FC<ReportGeneratorProps> = ({
         </Button>
         <Button onClick={onStartOver}>Plan Another Race</Button>
       </div>
+
+      {/* Save Race Dialog */}
+      {user && (
+        <SaveRaceDialog
+          open={showSaveDialog}
+          onOpenChange={setShowSaveDialog}
+          raceProfile={raceProfile}
+          nutritionPlan={nutritionPlan}
+          aidStations={aidStations}
+          user={user}
+          onSaved={() => {
+            console.log("Race saved successfully!");
+            // Optionally show a success message or refresh data
+          }}
+        />
+      )}
     </div>
   );
 };

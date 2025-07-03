@@ -258,16 +258,8 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onClose }) => {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4">
+    <div className="bg-background p-4">
       <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">User Profile</h1>
-          <Button variant="outline" onClick={onClose}>
-            <X className="h-4 w-4 mr-2" />
-            Close
-          </Button>
-        </div>
-
         <Tabs defaultValue="profile" className="w-full">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="profile">Profile</TabsTrigger>

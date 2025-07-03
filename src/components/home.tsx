@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { MoonIcon, SunIcon, User, LogOut } from "lucide-react";
 import { Button } from "./ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
@@ -20,7 +21,6 @@ import AidStationInput from "./AidStationInput";
 import AidStationCarousel from "./AidStationCarousel";
 import ReportGenerator from "./ReportGenerator";
 import UserProfileSetup from "./UserProfileSetup";
-import UserProfile from "./UserProfile";
 import { UnitPreferences } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
 
@@ -43,6 +43,7 @@ interface AidStationWithTiming extends AidStation {
 type Step = "race-details" | "nutrition" | "aid-stations" | "review" | "report";
 
 export default function Home() {
+  const navigate = useNavigate();
   const [darkMode, setDarkMode] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [currentStep, setCurrentStep] = useState<Step>("race-details");
@@ -59,7 +60,6 @@ export default function Home() {
   const [user, setUser] = useState<any>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [showAuthDialog, setShowAuthDialog] = useState(false);
-  const [showUserProfile, setShowUserProfile] = useState(false);
   const [needsProfileSetup, setNeedsProfileSetup] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "signup" | "reset">(
     "login",
@@ -397,7 +397,7 @@ export default function Home() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setShowUserProfile(true)}
+                  onClick={() => navigate("/profile")}
                   className="flex items-center gap-2"
                 >
                   <User className="h-4 w-4" />
@@ -688,11 +688,6 @@ export default function Home() {
       {/* User Profile Setup Modal */}
       {needsProfileSetup && user && (
         <UserProfileSetup user={user} onComplete={handleProfileSetupComplete} />
-      )}
-
-      {/* User Profile Modal */}
-      {showUserProfile && user && (
-        <UserProfile user={user} onClose={() => setShowUserProfile(false)} />
       )}
     </div>
   );
