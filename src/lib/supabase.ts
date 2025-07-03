@@ -24,7 +24,7 @@ export interface SavedRace {
   estimated_time: string;
   unit_preferences: any;
   aid_stations?: any[];
-  nutrition_plan?: NutritionPlan;
+  nutrition_plan?: any;
   created_at: string;
   updated_at: string;
 }
@@ -63,9 +63,13 @@ export class RaceDataStorage {
         distance: parseFloat(raceProfile.distance),
         elevation_gain: parseFloat(raceProfile.elevationGain),
         estimated_time: raceProfile.estimatedTime,
-        unit_preferences: raceProfile.unitPreferences || {},
-        aid_stations: aidStations || [],
-        nutrition_plan: nutritionPlan || null,
+        unit_preferences: JSON.parse(
+          JSON.stringify(raceProfile.unitPreferences || {}),
+        ),
+        aid_stations: JSON.parse(JSON.stringify(aidStations || [])),
+        nutrition_plan: nutritionPlan
+          ? JSON.parse(JSON.stringify(nutritionPlan))
+          : null,
       };
 
       const { data, error } = await supabase
@@ -102,7 +106,13 @@ export class RaceDataStorage {
         return [];
       }
 
-      return data || [];
+      return (data || []).map((race) => ({
+        ...race,
+        estimated_time: race.estimated_time as string,
+        unit_preferences: race.unit_preferences || {},
+        aid_stations: race.aid_stations || [],
+        nutrition_plan: race.nutrition_plan || null,
+      }));
     } catch (error) {
       console.error("Error fetching saved races:", error);
       return [];
@@ -129,7 +139,13 @@ export class RaceDataStorage {
         return null;
       }
 
-      return data;
+      return {
+        ...data,
+        estimated_time: data.estimated_time as string,
+        unit_preferences: data.unit_preferences || {},
+        aid_stations: data.aid_stations || [],
+        nutrition_plan: data.nutrition_plan || null,
+      };
     } catch (error) {
       console.error("Error fetching saved race:", error);
       return null;
