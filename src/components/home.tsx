@@ -44,6 +44,7 @@ type Step = "race-details" | "nutrition" | "aid-stations" | "review" | "report";
 
 export default function Home() {
   const [darkMode, setDarkMode] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [currentStep, setCurrentStep] = useState<Step>("race-details");
   const [raceProfile, setRaceProfile] = useState<RaceProfileType | null>(null);
   const [nutritionPlan, setNutritionPlan] = useState<NutritionPlan | null>(
@@ -65,7 +66,7 @@ export default function Home() {
   );
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [isAuthLoading, setIsAuthLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
 
   const toggleDarkMode = () => {
@@ -76,12 +77,20 @@ export default function Home() {
   useEffect(() => {
     // Get current user
     const getCurrentUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      setUser(user);
-      if (user) {
-        checkUserProfile(user.id);
+      try {
+        console.log("Getting current user...");
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        console.log("Current user:", user);
+        setUser(user);
+        if (user) {
+          checkUserProfile(user.id);
+        }
+      } catch (error) {
+        console.error("Error getting current user:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
     getCurrentUser();
@@ -134,7 +143,7 @@ export default function Home() {
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    setIsAuthLoading(true);
     setAuthError(null);
 
     try {
@@ -210,7 +219,7 @@ export default function Home() {
   };
 
   const handleGoogleAuth = async () => {
-    setIsLoading(true);
+    setIsAuthLoading(true);
     setAuthError(null);
     try {
       const { data, error } = await supabase.auth.signInWithOAuth({
@@ -233,7 +242,7 @@ export default function Home() {
   };
 
   const handleFacebookAuth = async () => {
-    setIsLoading(true);
+    setIsAuthLoading(true);
     setAuthError(null);
     try {
       const { data, error } = await supabase.auth.signInWithOAuth({
@@ -309,8 +318,21 @@ export default function Home() {
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading UltraSherpa...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className={`min-h-screen bg-background ${darkMode ? "dark" : ""}`}>
+    <div
+      className={`min-h-screen ${darkMode ? "dark bg-gray-900 text-white" : "bg-white text-gray-900"}`}
+    >
       <div className="container mx-auto px-4 py-8">
         <header className="flex justify-between items-center mb-8">
           <div className="flex items-center gap-4">
@@ -323,7 +345,7 @@ export default function Home() {
               <h1 className="text-3xl font-bold">UltraSherpa</h1>
             </div>
             {/* Progress indicator */}
-            <div className="hidden md:flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="hidden md:flex items-center gap-2 text-sm opacity-70">
               <span
                 className={
                   currentStep === "race-details"
@@ -416,7 +438,7 @@ export default function Home() {
                           variant="outline"
                           className="w-full"
                           onClick={handleGoogleAuth}
-                          disabled={isLoading}
+                          disabled={isAuthLoading}
                         >
                           Continue with Google
                         </Button>
@@ -424,7 +446,7 @@ export default function Home() {
                           variant="outline"
                           className="w-full"
                           onClick={handleFacebookAuth}
-                          disabled={isLoading}
+                          disabled={isAuthLoading}
                         >
                           Continue with Facebook
                         </Button>
@@ -488,9 +510,9 @@ export default function Home() {
                       <Button
                         type="submit"
                         className="w-full"
-                        disabled={isLoading}
+                        disabled={isAuthLoading}
                       >
-                        {isLoading
+                        {isAuthLoading
                           ? "Loading..."
                           : authMode === "login"
                             ? "Sign In"
@@ -567,7 +589,7 @@ export default function Home() {
                 <h2 className="text-2xl font-semibold mb-2">
                   Step 1: Race Details
                 </h2>
-                <p className="text-muted-foreground">
+                <p className="opacity-70">
                   Enter your race information to get started with your
                   personalized plan
                 </p>
@@ -582,7 +604,7 @@ export default function Home() {
                 <h2 className="text-2xl font-semibold mb-2">
                   Step 2: Nutrition Planning
                 </h2>
-                <p className="text-muted-foreground">
+                <p className="opacity-70">
                   Set your target nutrition intake based on your race duration
                 </p>
               </div>
@@ -602,7 +624,7 @@ export default function Home() {
                 <h2 className="text-2xl font-semibold mb-2">
                   Step 3: Aid Stations
                 </h2>
-                <p className="text-muted-foreground">
+                <p className="opacity-70">
                   Define your aid station locations and distances
                 </p>
               </div>
@@ -620,7 +642,7 @@ export default function Home() {
                 <h2 className="text-2xl font-semibold mb-2">
                   Step 4: Review Aid Stations
                 </h2>
-                <p className="text-muted-foreground">
+                <p className="opacity-70">
                   Fine-tune timing and nutrition for each aid station
                 </p>
               </div>
@@ -642,7 +664,7 @@ export default function Home() {
                 <h2 className="text-2xl font-semibold mb-2">
                   Step 5: Race Plan Report
                 </h2>
-                <p className="text-muted-foreground">
+                <p className="opacity-70">
                   Your complete race strategy is ready
                 </p>
               </div>
@@ -658,7 +680,7 @@ export default function Home() {
           )}
         </main>
 
-        <footer className="mt-12 text-center text-sm text-muted-foreground">
+        <footer className="mt-12 text-center text-sm opacity-60">
           <p>© {new Date().getFullYear()} UltraSherpa. All rights reserved.</p>
         </footer>
       </div>

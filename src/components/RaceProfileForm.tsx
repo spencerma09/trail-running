@@ -196,7 +196,7 @@ const RaceProfileForm: React.FC<RaceProfileFormProps> = ({
   };
 
   return (
-    <Card className="w-full bg-white">
+    <Card className="w-full bg-white border border-gray-200">
       <CardHeader>
         <div className="flex justify-between items-start">
           <div>
