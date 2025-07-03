@@ -19,6 +19,8 @@ import NutritionSliders, { NutritionPlan } from "./NutritionSliders";
 import AidStationInput from "./AidStationInput";
 import AidStationCarousel from "./AidStationCarousel";
 import ReportGenerator from "./ReportGenerator";
+import UserProfileSetup from "./UserProfileSetup";
+import UserProfile from "./UserProfile";
 import { UnitPreferences } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
 
@@ -54,7 +56,10 @@ export default function Home() {
 
   // Authentication state
   const [user, setUser] = useState<any>(null);
+  const [userProfile, setUserProfile] = useState<any>(null);
   const [showAuthDialog, setShowAuthDialog] = useState(false);
+  const [showUserProfile, setShowUserProfile] = useState(false);
+  const [needsProfileSetup, setNeedsProfileSetup] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "signup" | "reset">(
     "login",
   );
@@ -75,6 +80,9 @@ export default function Home() {
         data: { user },
       } = await supabase.auth.getUser();
       setUser(user);
+      if (user) {
+        checkUserProfile(user.id);
+      }
     };
     getCurrentUser();
 
@@ -83,10 +91,46 @@ export default function Home() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user || null);
+      if (session?.user) {
+        checkUserProfile(session.user.id);
+      } else {
+        setUserProfile(null);
+        setNeedsProfileSetup(false);
+      }
     });
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const checkUserProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("user_profiles")
+        .select("*")
+        .eq("user_id", userId)
+        .single();
+
+      if (error && error.code === "PGRST116") {
+        // No profile found, user needs to set up profile
+        setNeedsProfileSetup(true);
+        setUserProfile(null);
+      } else if (error) {
+        console.error("Error checking user profile:", error);
+      } else {
+        setUserProfile(data);
+        setNeedsProfileSetup(false);
+      }
+    } catch (error) {
+      console.error("Error checking user profile:", error);
+    }
+  };
+
+  const handleProfileSetupComplete = () => {
+    setNeedsProfileSetup(false);
+    if (user) {
+      checkUserProfile(user.id);
+    }
+  };
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -270,7 +314,14 @@ export default function Home() {
       <div className="container mx-auto px-4 py-8">
         <header className="flex justify-between items-center mb-8">
           <div className="flex items-center gap-4">
-            <h1 className="text-3xl font-bold">UltraSherpa</h1>
+            <div className="flex items-center gap-3">
+              <img
+                src="/ultrasherpa-icon.png"
+                alt="UltraSherpa"
+                className="h-10 w-10"
+              />
+              <h1 className="text-3xl font-bold">UltraSherpa</h1>
+            </div>
             {/* Progress indicator */}
             <div className="hidden md:flex items-center gap-2 text-sm text-muted-foreground">
               <span
@@ -321,9 +372,19 @@ export default function Home() {
           <div className="flex items-center gap-2">
             {user ? (
               <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">
-                  {user.email}
-                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowUserProfile(true)}
+                  className="flex items-center gap-2"
+                >
+                  <User className="h-4 w-4" />
+                  <span className="text-sm">
+                    {userProfile
+                      ? `${userProfile.first_name} ${userProfile.last_name}`
+                      : user.email}
+                  </span>
+                </Button>
                 <Button variant="ghost" size="sm" onClick={handleSignOut}>
                   <LogOut className="h-4 w-4 mr-2" />
                   Sign Out
@@ -591,6 +652,7 @@ export default function Home() {
                 aidStations={finalAidStations}
                 onBack={handleBack}
                 onStartOver={handleStartOver}
+                user={user}
               />
             </div>
           )}
@@ -600,6 +662,16 @@ export default function Home() {
           <p>© {new Date().getFullYear()} UltraSherpa. All rights reserved.</p>
         </footer>
       </div>
+
+      {/* User Profile Setup Modal */}
+      {needsProfileSetup && user && (
+        <UserProfileSetup user={user} onComplete={handleProfileSetupComplete} />
+      )}
+
+      {/* User Profile Modal */}
+      {showUserProfile && user && (
+        <UserProfile user={user} onClose={() => setShowUserProfile(false)} />
+      )}
     </div>
   );
 }

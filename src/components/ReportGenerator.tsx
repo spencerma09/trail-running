@@ -1,7 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Download, Printer, Share2 } from "lucide-react";
+import { Download, Printer, Share2, Save } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -13,6 +13,7 @@ import {
 import { RaceProfile } from "./RaceProfileForm";
 import { NutritionPlan } from "./NutritionSliders";
 import { UnitPreferences, formatDistance } from "@/lib/utils";
+import SaveRaceDialog from "./SaveRaceDialog";
 
 interface AidStationWithTiming {
   id: string;
@@ -33,6 +34,7 @@ interface ReportGeneratorProps {
   aidStations: AidStationWithTiming[];
   onBack: () => void;
   onStartOver: () => void;
+  user?: any;
 }
 
 const ReportGenerator: React.FC<ReportGeneratorProps> = ({
@@ -41,7 +43,9 @@ const ReportGenerator: React.FC<ReportGeneratorProps> = ({
   aidStations,
   onBack,
   onStartOver,
+  user,
 }) => {
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
   const formatTime = (hours: number): string => {
     const h = Math.floor(hours);
     const m = Math.floor((hours - h) * 60);
@@ -60,6 +64,16 @@ const ReportGenerator: React.FC<ReportGeneratorProps> = ({
           <div className="flex justify-between items-center">
             <CardTitle>Race Planning Report</CardTitle>
             <div className="flex items-center gap-2">
+              {user && (
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => setShowSaveDialog(true)}
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Race
+                </Button>
+              )}
               <Button
                 variant="outline"
                 size="sm"

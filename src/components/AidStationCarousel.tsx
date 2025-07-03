@@ -100,6 +100,7 @@ const AidStationCarousel: React.FC<AidStationCarouselProps> = ({
   const [currentStationIndex, setCurrentStationIndex] = useState(0);
   const [user, setUser] = useState<any>(null);
   const [savedFoodItems, setSavedFoodItems] = useState<SavedFoodItem[]>([]);
+  const [savedNutritionItems, setSavedNutritionItems] = useState<any[]>([]);
   const [showSaveFoodDialog, setShowSaveFoodDialog] = useState(false);
   const [showLoadFoodDialog, setShowLoadFoodDialog] = useState(false);
   const [newFoodItem, setNewFoodItem] = useState({
@@ -162,6 +163,7 @@ const AidStationCarousel: React.FC<AidStationCarouselProps> = ({
       setUser(user);
       if (user) {
         loadSavedFoodItems(user.id);
+        loadSavedNutritionItems(user.id);
       }
     };
     getCurrentUser();
@@ -173,8 +175,10 @@ const AidStationCarousel: React.FC<AidStationCarouselProps> = ({
       setUser(session?.user || null);
       if (session?.user) {
         loadSavedFoodItems(session.user.id);
+        loadSavedNutritionItems(session.user.id);
       } else {
         setSavedFoodItems([]);
+        setSavedNutritionItems([]);
       }
     });
 
@@ -184,6 +188,21 @@ const AidStationCarousel: React.FC<AidStationCarouselProps> = ({
   const loadSavedFoodItems = async (userId: string) => {
     const items = await RaceDataStorage.getSavedFoodItems(userId);
     setSavedFoodItems(items);
+  };
+
+  const loadSavedNutritionItems = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("saved_nutrition_items")
+        .select("*")
+        .eq("user_id", userId)
+        .order("name");
+
+      if (error) throw error;
+      setSavedNutritionItems(data || []);
+    } catch (error) {
+      console.error("Error loading saved nutrition items:", error);
+    }
   };
 
   const handleSaveFoodItem = async () => {
@@ -213,6 +232,33 @@ const AidStationCarousel: React.FC<AidStationCarouselProps> = ({
       carbs: foodItem.carbs_per_serving,
       sodium: foodItem.sodium_per_serving,
       water: foodItem.water_per_serving,
+      quantity: 1,
+    };
+
+    if (isStartStation) {
+      setStartStationItems((prev) => [...prev, newItem]);
+    } else {
+      setStationsWithTiming((prev) =>
+        prev.map((station, index) =>
+          index === currentStationIndex - 1
+            ? {
+                ...station,
+                nutritionItems: [...station.nutritionItems, newItem],
+              }
+            : station,
+        ),
+      );
+    }
+    setShowLoadFoodDialog(false);
+  };
+
+  const handleLoadNutritionItem = (nutritionItem: any) => {
+    const newItem: NutritionItem = {
+      id: Date.now().toString(),
+      name: nutritionItem.name,
+      carbs: nutritionItem.carbs_per_hour,
+      sodium: nutritionItem.sodium_per_hour,
+      water: nutritionItem.water_per_hour,
       quantity: 1,
     };
 
@@ -624,70 +670,121 @@ const AidStationCarousel: React.FC<AidStationCarouselProps> = ({
                           <DialogTitle>Load Saved Food Items</DialogTitle>
                         </DialogHeader>
                         <div className="space-y-4 max-h-96 overflow-y-auto">
-                          {savedFoodItems.length === 0 ? (
+                          {savedFoodItems.length === 0 &&
+                          savedNutritionItems.length === 0 ? (
                             <p className="text-muted-foreground text-center py-8">
-                              No saved food items found. Save your first food
-                              item to see it here.
+                              No saved nutrition items found. Add items to your
+                              profile to see them here.
                             </p>
                           ) : (
-                            savedFoodItems.map((item) => (
-                              <div
-                                key={item.id}
-                                className="border rounded-lg p-4 flex justify-between items-center"
-                              >
+                            <>
+                              {savedNutritionItems.length > 0 && (
                                 <div>
-                                  <h4 className="font-medium">{item.name}</h4>
-                                  <p className="text-sm text-muted-foreground">
-                                    {item.carbs_per_serving}g carbs •{" "}
-                                    {item.sodium_per_serving}mg sodium •{" "}
-                                    {item.water_per_serving}ml water
-                                  </p>
-                                  <p className="text-xs text-muted-foreground">
-                                    {item.serving_size} • {item.category}
-                                  </p>
-                                </div>
-                                <div className="flex gap-2">
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handleLoadFoodItem(item)}
-                                  >
-                                    Add
-                                  </Button>
-                                  <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                      <Button variant="outline" size="sm">
-                                        <Trash2 className="h-4 w-4" />
+                                  <h4 className="font-medium mb-3 text-primary">
+                                    Saved Nutrition Items
+                                  </h4>
+                                  {savedNutritionItems.map((item) => (
+                                    <div
+                                      key={item.id}
+                                      className="border rounded-lg p-4 flex justify-between items-center mb-3"
+                                    >
+                                      <div>
+                                        <h4 className="font-medium">
+                                          {item.name}
+                                        </h4>
+                                        <p className="text-sm text-muted-foreground">
+                                          {item.carbs_per_hour}g carbs •{" "}
+                                          {item.sodium_per_hour}mg sodium •{" "}
+                                          {item.water_per_hour}ml water per hour
+                                        </p>
+                                        <p className="text-xs text-muted-foreground">
+                                          {item.category}
+                                          {item.notes && ` • ${item.notes}`}
+                                        </p>
+                                      </div>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() =>
+                                          handleLoadNutritionItem(item)
+                                        }
+                                      >
+                                        Add
                                       </Button>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                      <AlertDialogHeader>
-                                        <AlertDialogTitle>
-                                          Delete Food Item
-                                        </AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                          Are you sure you want to delete "
-                                          {item.name}"? This action cannot be
-                                          undone.
-                                        </AlertDialogDescription>
-                                      </AlertDialogHeader>
-                                      <AlertDialogFooter>
-                                        <AlertDialogCancel>
-                                          Cancel
-                                        </AlertDialogCancel>
-                                        <AlertDialogAction
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                              {savedFoodItems.length > 0 && (
+                                <div>
+                                  <h4 className="font-medium mb-3 text-muted-foreground">
+                                    Legacy Food Items
+                                  </h4>
+                                  {savedFoodItems.map((item) => (
+                                    <div
+                                      key={item.id}
+                                      className="border rounded-lg p-4 flex justify-between items-center mb-3"
+                                    >
+                                      <div>
+                                        <h4 className="font-medium">
+                                          {item.name}
+                                        </h4>
+                                        <p className="text-sm text-muted-foreground">
+                                          {item.carbs_per_serving}g carbs •{" "}
+                                          {item.sodium_per_serving}mg sodium •{" "}
+                                          {item.water_per_serving}ml water
+                                        </p>
+                                        <p className="text-xs text-muted-foreground">
+                                          {item.serving_size} • {item.category}
+                                        </p>
+                                      </div>
+                                      <div className="flex gap-2">
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
                                           onClick={() =>
-                                            handleDeleteFoodItem(item.id)
+                                            handleLoadFoodItem(item)
                                           }
                                         >
-                                          Delete
-                                        </AlertDialogAction>
-                                      </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                  </AlertDialog>
+                                          Add
+                                        </Button>
+                                        <AlertDialog>
+                                          <AlertDialogTrigger asChild>
+                                            <Button variant="outline" size="sm">
+                                              <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                          </AlertDialogTrigger>
+                                          <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                              <AlertDialogTitle>
+                                                Delete Food Item
+                                              </AlertDialogTitle>
+                                              <AlertDialogDescription>
+                                                Are you sure you want to delete
+                                                "{item.name}"? This action
+                                                cannot be undone.
+                                              </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                              <AlertDialogCancel>
+                                                Cancel
+                                              </AlertDialogCancel>
+                                              <AlertDialogAction
+                                                onClick={() =>
+                                                  handleDeleteFoodItem(item.id)
+                                                }
+                                              >
+                                                Delete
+                                              </AlertDialogAction>
+                                            </AlertDialogFooter>
+                                          </AlertDialogContent>
+                                        </AlertDialog>
+                                      </div>
+                                    </div>
+                                  ))}
                                 </div>
-                              </div>
-                            ))
+                              )}
+                            </>
                           )}
                         </div>
                       </DialogContent>

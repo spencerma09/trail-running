@@ -56,6 +56,81 @@ export type Database = {
           },
         ]
       }
+      saved_nutrition_items: {
+        Row: {
+          calories_per_hour: number | null
+          carbs_per_hour: number
+          category: string | null
+          created_at: string | null
+          id: string
+          name: string
+          notes: string | null
+          sodium_per_hour: number
+          updated_at: string | null
+          user_id: string
+          water_per_hour: number
+        }
+        Insert: {
+          calories_per_hour?: number | null
+          carbs_per_hour?: number
+          category?: string | null
+          created_at?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          sodium_per_hour?: number
+          updated_at?: string | null
+          user_id: string
+          water_per_hour?: number
+        }
+        Update: {
+          calories_per_hour?: number | null
+          carbs_per_hour?: number
+          category?: string | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          sodium_per_hour?: number
+          updated_at?: string | null
+          user_id?: string
+          water_per_hour?: number
+        }
+        Relationships: []
+      }
+      saved_race_reports: {
+        Row: {
+          aid_stations: Json
+          created_at: string | null
+          id: string
+          nutrition_plan: Json
+          race_name: string
+          race_profile: Json
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          aid_stations: Json
+          created_at?: string | null
+          id?: string
+          nutrition_plan: Json
+          race_name: string
+          race_profile: Json
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          aid_stations?: Json
+          created_at?: string | null
+          id?: string
+          nutrition_plan?: Json
+          race_name?: string
+          race_profile?: Json
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       saved_races: {
         Row: {
           aid_stations: Json | null
@@ -111,6 +186,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_profiles: {
+        Row: {
+          age: number | null
+          created_at: string | null
+          email: string
+          first_name: string
+          gender: string | null
+          id: string
+          last_name: string
+          location: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          age?: number | null
+          created_at?: string | null
+          email: string
+          first_name: string
+          gender?: string | null
+          id?: string
+          last_name: string
+          location?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          age?: number | null
+          created_at?: string | null
+          email?: string
+          first_name?: string
+          gender?: string | null
+          id?: string
+          last_name?: string
+          location?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       users: {
         Row: {
