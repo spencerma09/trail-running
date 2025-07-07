@@ -501,47 +501,6 @@ const RaceProfileForm: React.FC<RaceProfileFormProps> = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label>Fluid Units</Label>
-              <RadioGroup
-                value={unitPreferences.fluid}
-                onValueChange={(value) =>
-                  updateUnitPreference("fluid", value as UnitSystem)
-                }
-                className="flex gap-4"
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="metric" id="fluid-ml" />
-                  <Label htmlFor="fluid-ml">Milliliters (ml)</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="imperial" id="fluid-oz" />
-                  <Label htmlFor="fluid-oz">Fluid Ounces (oz)</Label>
-                </div>
-              </RadioGroup>
-            </div>
-            <div className="space-y-2">
-              <Label>Weight Units</Label>
-              <RadioGroup
-                value={unitPreferences.weight}
-                onValueChange={(value) =>
-                  updateUnitPreference("weight", value as UnitSystem)
-                }
-                className="flex gap-4"
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="metric" id="weight-g" />
-                  <Label htmlFor="weight-g">Grams (g)</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="imperial" id="weight-oz" />
-                  <Label htmlFor="weight-oz">Ounces (oz)</Label>
-                </div>
-              </RadioGroup>
-            </div>
-          </div>
-
           <div className="flex justify-end">
             <Button type="submit" className="px-6">
               Next: Nutrition Planning

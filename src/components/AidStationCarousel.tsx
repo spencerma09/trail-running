@@ -101,6 +101,7 @@ const AidStationCarousel: React.FC<AidStationCarouselProps> = ({
   const [user, setUser] = useState<any>(null);
   const [savedFoodItems, setSavedFoodItems] = useState<SavedFoodItem[]>([]);
   const [savedNutritionItems, setSavedNutritionItems] = useState<any[]>([]);
+  const [showAddItemDialog, setShowAddItemDialog] = useState(false);
   const [showSaveFoodDialog, setShowSaveFoodDialog] = useState(false);
   const [showLoadFoodDialog, setShowLoadFoodDialog] = useState(false);
   const [newFoodItem, setNewFoodItem] = useState({
@@ -213,6 +214,7 @@ const AidStationCarousel: React.FC<AidStationCarouselProps> = ({
     if (savedId) {
       await loadSavedFoodItems(user.id);
       setShowSaveFoodDialog(false);
+      setShowAddItemDialog(false);
       setNewFoodItem({
         name: "",
         carbs_per_serving: 0,
@@ -221,6 +223,31 @@ const AidStationCarousel: React.FC<AidStationCarouselProps> = ({
         serving_size: "1 unit",
         category: "other",
       });
+
+      // Add the new item to the current station
+      const newItem: NutritionItem = {
+        id: Date.now().toString(),
+        name: newFoodItem.name,
+        carbs: newFoodItem.carbs_per_serving,
+        sodium: newFoodItem.sodium_per_serving,
+        water: newFoodItem.water_per_serving,
+        quantity: 1,
+      };
+
+      if (isStartStation) {
+        setStartStationItems((prev) => [...prev, newItem]);
+      } else {
+        setStationsWithTiming((prev) =>
+          prev.map((station, index) =>
+            index === currentStationIndex - 1
+              ? {
+                  ...station,
+                  nutritionItems: [...station.nutritionItems, newItem],
+                }
+              : station,
+          ),
+        );
+      }
     }
     setIsLoading(false);
   };
@@ -653,300 +680,355 @@ const AidStationCarousel: React.FC<AidStationCarouselProps> = ({
             <CardTitle className="text-lg flex items-center justify-between">
               Nutrition Planning
               <div className="flex gap-2">
-                {user && (
-                  <>
-                    <Dialog
-                      open={showLoadFoodDialog}
-                      onOpenChange={setShowLoadFoodDialog}
-                    >
-                      <DialogTrigger asChild>
-                        <Button variant="outline" size="sm">
-                          <FolderOpen className="h-4 w-4 mr-2" />
-                          Load Food
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="max-w-2xl">
-                        <DialogHeader>
-                          <DialogTitle>Load Saved Food Items</DialogTitle>
-                        </DialogHeader>
-                        <div className="space-y-4 max-h-96 overflow-y-auto">
-                          {savedFoodItems.length === 0 &&
-                          savedNutritionItems.length === 0 ? (
-                            <p className="text-muted-foreground text-center py-8">
-                              No saved nutrition items found. Add items to your
-                              profile to see them here.
-                            </p>
-                          ) : (
-                            <>
-                              {savedNutritionItems.length > 0 && (
-                                <div>
-                                  <h4 className="font-medium mb-3 text-primary">
-                                    Saved Nutrition Items
-                                  </h4>
-                                  {savedNutritionItems.map((item) => (
-                                    <div
-                                      key={item.id}
-                                      className="border rounded-lg p-4 flex justify-between items-center mb-3"
-                                    >
-                                      <div>
-                                        <h4 className="font-medium">
-                                          {item.name}
-                                        </h4>
-                                        <p className="text-sm text-muted-foreground">
-                                          {item.carbs_per_hour}g carbs •{" "}
-                                          {item.sodium_per_hour}mg sodium •{" "}
-                                          {item.water_per_hour}ml water per hour
-                                        </p>
-                                        <p className="text-xs text-muted-foreground">
-                                          {item.category}
-                                          {item.notes && ` • ${item.notes}`}
-                                        </p>
-                                      </div>
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() =>
-                                          handleLoadNutritionItem(item)
-                                        }
-                                      >
-                                        Add
-                                      </Button>
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-                              {savedFoodItems.length > 0 && (
-                                <div>
-                                  <h4 className="font-medium mb-3 text-muted-foreground">
-                                    Legacy Food Items
-                                  </h4>
-                                  {savedFoodItems.map((item) => (
-                                    <div
-                                      key={item.id}
-                                      className="border rounded-lg p-4 flex justify-between items-center mb-3"
-                                    >
-                                      <div>
-                                        <h4 className="font-medium">
-                                          {item.name}
-                                        </h4>
-                                        <p className="text-sm text-muted-foreground">
-                                          {item.carbs_per_serving}g carbs •{" "}
-                                          {item.sodium_per_serving}mg sodium •{" "}
-                                          {item.water_per_serving}ml water
-                                        </p>
-                                        <p className="text-xs text-muted-foreground">
-                                          {item.serving_size} • {item.category}
-                                        </p>
-                                      </div>
-                                      <div className="flex gap-2">
-                                        <Button
-                                          variant="outline"
-                                          size="sm"
-                                          onClick={() =>
-                                            handleLoadFoodItem(item)
-                                          }
-                                        >
-                                          Add
-                                        </Button>
-                                        <AlertDialog>
-                                          <AlertDialogTrigger asChild>
-                                            <Button variant="outline" size="sm">
-                                              <Trash2 className="h-4 w-4" />
-                                            </Button>
-                                          </AlertDialogTrigger>
-                                          <AlertDialogContent>
-                                            <AlertDialogHeader>
-                                              <AlertDialogTitle>
-                                                Delete Food Item
-                                              </AlertDialogTitle>
-                                              <AlertDialogDescription>
-                                                Are you sure you want to delete
-                                                "{item.name}"? This action
-                                                cannot be undone.
-                                              </AlertDialogDescription>
-                                            </AlertDialogHeader>
-                                            <AlertDialogFooter>
-                                              <AlertDialogCancel>
-                                                Cancel
-                                              </AlertDialogCancel>
-                                              <AlertDialogAction
-                                                onClick={() =>
-                                                  handleDeleteFoodItem(item.id)
-                                                }
-                                              >
-                                                Delete
-                                              </AlertDialogAction>
-                                            </AlertDialogFooter>
-                                          </AlertDialogContent>
-                                        </AlertDialog>
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
-                            </>
-                          )}
-                        </div>
-                      </DialogContent>
-                    </Dialog>
-
-                    <Dialog
-                      open={showSaveFoodDialog}
-                      onOpenChange={setShowSaveFoodDialog}
-                    >
-                      <DialogTrigger asChild>
-                        <Button variant="outline" size="sm">
-                          <Save className="h-4 w-4 mr-2" />
-                          Save Food
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Save Food Item</DialogTitle>
-                        </DialogHeader>
-                        <div className="space-y-4">
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                              <Label htmlFor="food-name">Name</Label>
-                              <Input
-                                id="food-name"
-                                placeholder="e.g., Energy Gel"
-                                value={newFoodItem.name}
-                                onChange={(e) =>
-                                  setNewFoodItem((prev) => ({
-                                    ...prev,
-                                    name: e.target.value,
-                                  }))
-                                }
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="food-category">Category</Label>
-                              <Select
-                                value={newFoodItem.category}
-                                onValueChange={(value) =>
-                                  setNewFoodItem((prev) => ({
-                                    ...prev,
-                                    category: value,
-                                  }))
-                                }
-                              >
-                                <SelectTrigger>
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="gel">
-                                    Energy Gel
-                                  </SelectItem>
-                                  <SelectItem value="bar">
-                                    Energy Bar
-                                  </SelectItem>
-                                  <SelectItem value="drink">
-                                    Sports Drink
-                                  </SelectItem>
-                                  <SelectItem value="food">
-                                    Real Food
-                                  </SelectItem>
-                                  <SelectItem value="supplement">
-                                    Supplement
-                                  </SelectItem>
-                                  <SelectItem value="other">Other</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          </div>
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                              <Label htmlFor="food-serving">Serving Size</Label>
-                              <Input
-                                id="food-serving"
-                                placeholder="e.g., 1 packet"
-                                value={newFoodItem.serving_size}
-                                onChange={(e) =>
-                                  setNewFoodItem((prev) => ({
-                                    ...prev,
-                                    serving_size: e.target.value,
-                                  }))
-                                }
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="food-carbs">
-                                Carbs per Serving (g)
-                              </Label>
-                              <Input
-                                id="food-carbs"
-                                type="number"
-                                value={newFoodItem.carbs_per_serving}
-                                onChange={(e) =>
-                                  setNewFoodItem((prev) => ({
-                                    ...prev,
-                                    carbs_per_serving:
-                                      parseInt(e.target.value) || 0,
-                                  }))
-                                }
-                              />
-                            </div>
-                          </div>
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                              <Label htmlFor="food-sodium">
-                                Sodium per Serving (mg)
-                              </Label>
-                              <Input
-                                id="food-sodium"
-                                type="number"
-                                value={newFoodItem.sodium_per_serving}
-                                onChange={(e) =>
-                                  setNewFoodItem((prev) => ({
-                                    ...prev,
-                                    sodium_per_serving:
-                                      parseInt(e.target.value) || 0,
-                                  }))
-                                }
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="food-water">
-                                Water per Serving (ml)
-                              </Label>
-                              <Input
-                                id="food-water"
-                                type="number"
-                                value={newFoodItem.water_per_serving}
-                                onChange={(e) =>
-                                  setNewFoodItem((prev) => ({
-                                    ...prev,
-                                    water_per_serving:
-                                      parseInt(e.target.value) || 0,
-                                  }))
-                                }
-                              />
-                            </div>
-                          </div>
-                          <div className="flex justify-end gap-2">
+                <Dialog
+                  open={showAddItemDialog}
+                  onOpenChange={setShowAddItemDialog}
+                >
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Item
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>Add Nutrition Item</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <p className="text-sm text-muted-foreground">
+                        Choose how you'd like to add a nutrition item:
+                      </p>
+                      <div className="grid grid-cols-1 gap-3">
+                        {user &&
+                          (savedFoodItems.length > 0 ||
+                            savedNutritionItems.length > 0) && (
                             <Button
                               variant="outline"
-                              onClick={() => setShowSaveFoodDialog(false)}
+                              className="h-auto p-4 flex flex-col items-start gap-2"
+                              onClick={() => {
+                                setShowLoadFoodDialog(true);
+                              }}
                             >
-                              Cancel
+                              <div className="flex items-center gap-2">
+                                <FolderOpen className="h-4 w-4" />
+                                <span className="font-medium">
+                                  Add Saved Item
+                                </span>
+                              </div>
+                              <span className="text-xs text-muted-foreground text-left">
+                                Select from your saved nutrition items and
+                                legacy foods
+                              </span>
                             </Button>
-                            <Button
-                              onClick={handleSaveFoodItem}
-                              disabled={isLoading || !newFoodItem.name}
-                            >
-                              {isLoading ? "Saving..." : "Save Food Item"}
-                            </Button>
+                          )}
+                        <Button
+                          variant="outline"
+                          className="h-auto p-4 flex flex-col items-start gap-2"
+                          onClick={() => {
+                            setShowSaveFoodDialog(true);
+                          }}
+                        >
+                          <div className="flex items-center gap-2">
+                            <Plus className="h-4 w-4" />
+                            <span className="font-medium">Add New Item</span>
                           </div>
+                          <span className="text-xs text-muted-foreground text-left">
+                            Create a new food item with nutrition info and save
+                            it
+                          </span>
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          className="h-auto p-4 flex flex-col items-start gap-2"
+                          onClick={() => {
+                            addNutritionItem();
+                            setShowAddItemDialog(false);
+                          }}
+                        >
+                          <div className="flex items-center gap-2">
+                            <Plus className="h-4 w-4" />
+                            <span className="font-medium">Add Blank Item</span>
+                          </div>
+                          <span className="text-xs text-muted-foreground text-left">
+                            Add an empty item to fill in manually
+                          </span>
+                        </Button>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+
+                {/* Load Food Dialog */}
+                <Dialog
+                  open={showLoadFoodDialog}
+                  onOpenChange={setShowLoadFoodDialog}
+                >
+                  <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                      <DialogTitle>Add Saved Item</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 max-h-96 overflow-y-auto">
+                      {savedFoodItems.length === 0 &&
+                      savedNutritionItems.length === 0 ? (
+                        <p className="text-muted-foreground text-center py-8">
+                          No saved nutrition items found. Add items to your
+                          profile to see them here.
+                        </p>
+                      ) : (
+                        <>
+                          {savedNutritionItems.length > 0 && (
+                            <div>
+                              <h4 className="font-medium mb-3 text-primary">
+                                Saved Nutrition Items
+                              </h4>
+                              {savedNutritionItems.map((item) => (
+                                <div
+                                  key={item.id}
+                                  className="border rounded-lg p-4 flex justify-between items-center mb-3"
+                                >
+                                  <div>
+                                    <h4 className="font-medium">{item.name}</h4>
+                                    <p className="text-sm text-muted-foreground">
+                                      {item.carbs_per_hour}g carbs •{" "}
+                                      {item.sodium_per_hour}mg sodium •{" "}
+                                      {item.water_per_hour}ml water per hour
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                      {item.category}
+                                      {item.notes && ` • ${item.notes}`}
+                                    </p>
+                                  </div>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() =>
+                                      handleLoadNutritionItem(item)
+                                    }
+                                  >
+                                    Add
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          {savedFoodItems.length > 0 && (
+                            <div>
+                              <h4 className="font-medium mb-3 text-muted-foreground">
+                                Legacy Food Items
+                              </h4>
+                              {savedFoodItems.map((item) => (
+                                <div
+                                  key={item.id}
+                                  className="border rounded-lg p-4 flex justify-between items-center mb-3"
+                                >
+                                  <div>
+                                    <h4 className="font-medium">{item.name}</h4>
+                                    <p className="text-sm text-muted-foreground">
+                                      {item.carbs_per_serving}g carbs •{" "}
+                                      {item.sodium_per_serving}mg sodium •{" "}
+                                      {item.water_per_serving}ml water
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                      {item.serving_size} • {item.category}
+                                    </p>
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => handleLoadFoodItem(item)}
+                                    >
+                                      Add
+                                    </Button>
+                                    <AlertDialog>
+                                      <AlertDialogTrigger asChild>
+                                        <Button variant="outline" size="sm">
+                                          <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                      </AlertDialogTrigger>
+                                      <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                          <AlertDialogTitle>
+                                            Delete Food Item
+                                          </AlertDialogTitle>
+                                          <AlertDialogDescription>
+                                            Are you sure you want to delete "
+                                            {item.name}"? This action cannot be
+                                            undone.
+                                          </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                          <AlertDialogCancel>
+                                            Cancel
+                                          </AlertDialogCancel>
+                                          <AlertDialogAction
+                                            onClick={() =>
+                                              handleDeleteFoodItem(item.id)
+                                            }
+                                          >
+                                            Delete
+                                          </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                      </AlertDialogContent>
+                                    </AlertDialog>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </DialogContent>
+                </Dialog>
+
+                {/* Save Food Dialog */}
+                <Dialog
+                  open={showSaveFoodDialog}
+                  onOpenChange={setShowSaveFoodDialog}
+                >
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Add New Item</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <p className="text-sm text-muted-foreground">
+                        Create a new nutrition item. It will be automatically
+                        saved to your profile for future use.
+                      </p>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="food-name">Name</Label>
+                          <Input
+                            id="food-name"
+                            placeholder="e.g., Energy Gel"
+                            value={newFoodItem.name}
+                            onChange={(e) =>
+                              setNewFoodItem((prev) => ({
+                                ...prev,
+                                name: e.target.value,
+                              }))
+                            }
+                          />
                         </div>
-                      </DialogContent>
-                    </Dialog>
-                  </>
-                )}
-                <Button variant="outline" size="sm" onClick={addNutritionItem}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Item
-                </Button>
+                        <div className="space-y-2">
+                          <Label htmlFor="food-category">Category</Label>
+                          <Select
+                            value={newFoodItem.category}
+                            onValueChange={(value) =>
+                              setNewFoodItem((prev) => ({
+                                ...prev,
+                                category: value,
+                              }))
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="gel">Energy Gel</SelectItem>
+                              <SelectItem value="bar">Energy Bar</SelectItem>
+                              <SelectItem value="drink">
+                                Sports Drink
+                              </SelectItem>
+                              <SelectItem value="food">Real Food</SelectItem>
+                              <SelectItem value="supplement">
+                                Supplement
+                              </SelectItem>
+                              <SelectItem value="other">Other</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="food-serving">Serving Size</Label>
+                          <Input
+                            id="food-serving"
+                            placeholder="e.g., 1 packet"
+                            value={newFoodItem.serving_size}
+                            onChange={(e) =>
+                              setNewFoodItem((prev) => ({
+                                ...prev,
+                                serving_size: e.target.value,
+                              }))
+                            }
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="food-carbs">
+                            Carbs per Serving (g)
+                          </Label>
+                          <Input
+                            id="food-carbs"
+                            type="number"
+                            value={newFoodItem.carbs_per_serving}
+                            onChange={(e) =>
+                              setNewFoodItem((prev) => ({
+                                ...prev,
+                                carbs_per_serving:
+                                  parseInt(e.target.value) || 0,
+                              }))
+                            }
+                          />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="food-sodium">
+                            Sodium per Serving (mg)
+                          </Label>
+                          <Input
+                            id="food-sodium"
+                            type="number"
+                            value={newFoodItem.sodium_per_serving}
+                            onChange={(e) =>
+                              setNewFoodItem((prev) => ({
+                                ...prev,
+                                sodium_per_serving:
+                                  parseInt(e.target.value) || 0,
+                              }))
+                            }
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="food-water">
+                            Water per Serving (ml)
+                          </Label>
+                          <Input
+                            id="food-water"
+                            type="number"
+                            value={newFoodItem.water_per_serving}
+                            onChange={(e) =>
+                              setNewFoodItem((prev) => ({
+                                ...prev,
+                                water_per_serving:
+                                  parseInt(e.target.value) || 0,
+                              }))
+                            }
+                          />
+                        </div>
+                      </div>
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            setShowSaveFoodDialog(false);
+                            setShowAddItemDialog(false);
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          onClick={handleSaveFoodItem}
+                          disabled={isLoading || !newFoodItem.name}
+                        >
+                          {isLoading ? "Adding..." : "Add & Save Item"}
+                        </Button>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
               </div>
             </CardTitle>
             <p className="text-sm text-muted-foreground">

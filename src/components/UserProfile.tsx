@@ -117,9 +117,30 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onClose }) => {
           gender: data.gender,
           location: data.location,
         });
+      } else {
+        // No profile found, create a default one for display
+        setProfile({
+          id: "",
+          firstName: "",
+          lastName: "",
+          email: user.email || "",
+          age: undefined,
+          gender: undefined,
+          location: undefined,
+        });
       }
     } catch (error) {
       console.error("Error loading user profile:", error);
+      // Set a default profile even on error
+      setProfile({
+        id: "",
+        firstName: "",
+        lastName: "",
+        email: user.email || "",
+        age: undefined,
+        gender: undefined,
+        location: undefined,
+      });
     }
   };
 
@@ -158,23 +179,48 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onClose }) => {
 
     setIsLoading(true);
     try {
-      const { error } = await supabase
-        .from("user_profiles")
-        .update({
-          first_name: profile.firstName,
-          last_name: profile.lastName,
-          email: profile.email,
-          age: profile.age || null,
-          gender: profile.gender || null,
-          location: profile.location || null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("user_id", user.id);
+      if (profile.id) {
+        // Update existing profile
+        const { error } = await supabase
+          .from("user_profiles")
+          .update({
+            first_name: profile.firstName,
+            last_name: profile.lastName,
+            email: profile.email,
+            age: profile.age || null,
+            gender: profile.gender || null,
+            location: profile.location || null,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("user_id", user.id);
 
-      if (error) throw error;
+        if (error) throw error;
+      } else {
+        // Create new profile
+        const { data, error } = await supabase
+          .from("user_profiles")
+          .insert({
+            user_id: user.id,
+            first_name: profile.firstName,
+            last_name: profile.lastName,
+            email: profile.email,
+            age: profile.age || null,
+            gender: profile.gender || null,
+            location: profile.location || null,
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        // Update the profile state with the new ID
+        if (data) {
+          setProfile((prev) => (prev ? { ...prev, id: data.id } : null));
+        }
+      }
       setIsEditing(false);
     } catch (error) {
-      console.error("Error updating profile:", error);
+      console.error("Error saving profile:", error);
     } finally {
       setIsLoading(false);
     }
