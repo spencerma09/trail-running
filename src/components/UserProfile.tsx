@@ -76,6 +76,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onClose }) => {
   );
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [showAddNutrition, setShowAddNutrition] = useState(false);
   const [newNutritionItem, setNewNutritionItem] = useState({
     name: "",
@@ -89,9 +90,21 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onClose }) => {
 
   useEffect(() => {
     if (user) {
-      loadUserProfile();
-      loadSavedRaces();
-      loadSavedNutrition();
+      const loadAllData = async () => {
+        setIsInitialLoading(true);
+        try {
+          await Promise.all([
+            loadUserProfile(),
+            loadSavedRaces(),
+            loadSavedNutrition(),
+          ]);
+        } catch (error) {
+          console.error("Error loading user data:", error);
+        } finally {
+          setIsInitialLoading(false);
+        }
+      };
+      loadAllData();
     }
   }, [user]);
 
@@ -295,10 +308,28 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onClose }) => {
     setProfile({ ...profile, [field]: value });
   };
 
+  if (isInitialLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!profile) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <p>Loading profile...</p>
+        <div className="text-center">
+          <p className="text-muted-foreground">
+            Unable to load profile. Please try refreshing the page.
+          </p>
+          <Button onClick={() => window.location.reload()} className="mt-4">
+            Refresh Page
+          </Button>
+        </div>
       </div>
     );
   }

@@ -24,7 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { RaceDataStorage, SavedRace, supabase } from "@/lib/supabase";
-import { Save, FolderOpen, Trash2 } from "lucide-react";
+import { FolderOpen, Trash2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -66,7 +66,7 @@ const RaceProfileForm: React.FC<RaceProfileFormProps> = ({
 }) => {
   const [user, setUser] = useState<any>(null);
   const [savedRaces, setSavedRaces] = useState<SavedRace[]>([]);
-  const [showSaveDialog, setShowSaveDialog] = useState(false);
+
   const [showLoadDialog, setShowLoadDialog] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [raceName, setRaceName] = useState<string>("");
@@ -113,29 +113,6 @@ const RaceProfileForm: React.FC<RaceProfileFormProps> = ({
   const loadSavedRaces = async (userId: string) => {
     const races = await RaceDataStorage.getSavedRaces(userId);
     setSavedRaces(races);
-  };
-
-  const handleSaveRace = async () => {
-    if (!user) return;
-
-    setIsLoading(true);
-    const raceProfile: RaceProfile = {
-      raceName,
-      raceDate,
-      startTime,
-      distance,
-      elevationGain,
-      estimatedTime: `${hours.padStart(2, "0")}:${minutes.padStart(2, "0")}:${seconds.padStart(2, "0")}`,
-      unitPreferences,
-    };
-
-    const savedId = await RaceDataStorage.saveRaceProfile(user.id, raceProfile);
-    if (savedId) {
-      await loadSavedRaces(user.id);
-      setShowSaveDialog(false);
-      onSave(raceProfile);
-    }
-    setIsLoading(false);
   };
 
   const handleLoadRace = async (savedRace: SavedRace) => {
@@ -207,124 +184,77 @@ const RaceProfileForm: React.FC<RaceProfileFormProps> = ({
             </CardDescription>
           </div>
           {user && (
-            <div className="flex gap-2">
-              <Dialog open={showLoadDialog} onOpenChange={setShowLoadDialog}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <FolderOpen className="h-4 w-4 mr-2" />
-                    Load Race
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-2xl">
-                  <DialogHeader>
-                    <DialogTitle>Load Saved Race</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4 max-h-96 overflow-y-auto">
-                    {savedRaces.length === 0 ? (
-                      <p className="text-muted-foreground text-center py-8">
-                        No saved races found. Save your first race to see it
-                        here.
-                      </p>
-                    ) : (
-                      savedRaces.map((race) => (
-                        <div
-                          key={race.id}
-                          className="border rounded-lg p-4 flex justify-between items-center"
-                        >
-                          <div>
-                            <h4 className="font-medium">{race.race_name}</h4>
-                            <p className="text-sm text-muted-foreground">
-                              {race.race_date} • {race.distance}{" "}
-                              {race.unit_preferences?.distance === "metric"
-                                ? "km"
-                                : "mi"}
-                            </p>
-                          </div>
-                          <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleLoadRace(race)}
-                            >
-                              Load
-                            </Button>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button variant="outline" size="sm">
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>
-                                    Delete Race
-                                  </AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Are you sure you want to delete "
-                                    {race.race_name}"? This action cannot be
-                                    undone.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => handleDeleteRace(race.id)}
-                                  >
-                                    Delete
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </DialogContent>
-              </Dialog>
-
-              <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <Save className="h-4 w-4 mr-2" />
-                    Save Race
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Save Race Profile</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <p className="text-sm text-muted-foreground">
-                      Save this race profile to your account for future use.
+            <Dialog open={showLoadDialog} onOpenChange={setShowLoadDialog}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <FolderOpen className="h-4 w-4 mr-2" />
+                  Load Race
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>Load Saved Race</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 max-h-96 overflow-y-auto">
+                  {savedRaces.length === 0 ? (
+                    <p className="text-muted-foreground text-center py-8">
+                      No saved races found. Save your first race to see it here.
                     </p>
-                    <div className="bg-muted p-4 rounded-lg">
-                      <h4 className="font-medium">
-                        {raceName || "Untitled Race"}
-                      </h4>
-                      <p className="text-sm text-muted-foreground">
-                        {raceDate} • {distance}{" "}
-                        {unitPreferences.distance === "metric" ? "km" : "mi"}
-                      </p>
-                    </div>
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        onClick={() => setShowSaveDialog(false)}
+                  ) : (
+                    savedRaces.map((race) => (
+                      <div
+                        key={race.id}
+                        className="border rounded-lg p-4 flex justify-between items-center"
                       >
-                        Cancel
-                      </Button>
-                      <Button
-                        onClick={handleSaveRace}
-                        disabled={isLoading || !raceName}
-                      >
-                        {isLoading ? "Saving..." : "Save Race"}
-                      </Button>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
+                        <div>
+                          <h4 className="font-medium">{race.race_name}</h4>
+                          <p className="text-sm text-muted-foreground">
+                            {race.race_date} • {race.distance}{" "}
+                            {race.unit_preferences?.distance === "metric"
+                              ? "km"
+                              : "mi"}
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleLoadRace(race)}
+                          >
+                            Load
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="outline" size="sm">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete Race</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to delete "
+                                  {race.race_name}"? This action cannot be
+                                  undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleDeleteRace(race.id)}
+                                >
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </DialogContent>
+            </Dialog>
           )}
         </div>
       </CardHeader>
