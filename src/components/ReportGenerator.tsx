@@ -1,7 +1,14 @@
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Download, Printer, Share2, Save } from "lucide-react";
+import {
+  Download,
+  Printer,
+  Share2,
+  Save,
+  Package,
+  Utensils,
+} from "lucide-react";
 import {
   Table,
   TableBody,
@@ -34,6 +41,8 @@ interface ReportGeneratorProps {
   aidStations: AidStationWithTiming[];
   onBack: () => void;
   onStartOver: () => void;
+  onPlanGear?: () => void;
+  onCreateNutritionTraining?: () => void;
   user?: any;
 }
 
@@ -43,6 +52,8 @@ const ReportGenerator: React.FC<ReportGeneratorProps> = ({
   aidStations,
   onBack,
   onStartOver,
+  onPlanGear,
+  onCreateNutritionTraining,
   user,
 }) => {
   const [showSaveDialog, setShowSaveDialog] = useState(false);
@@ -233,7 +244,21 @@ const ReportGenerator: React.FC<ReportGeneratorProps> = ({
         <Button variant="outline" onClick={onBack}>
           Back
         </Button>
-        <Button onClick={onStartOver}>Plan Another Race</Button>
+        <div className="flex gap-3">
+          {onPlanGear && (
+            <Button variant="outline" onClick={onPlanGear}>
+              <Package className="h-4 w-4 mr-2" />
+              Plan Your Gear
+            </Button>
+          )}
+          {onCreateNutritionTraining && (
+            <Button variant="outline" onClick={onCreateNutritionTraining}>
+              <Utensils className="h-4 w-4 mr-2" />
+              Create Nutrition Training Plan
+            </Button>
+          )}
+          <Button onClick={onStartOver}>Plan Another Race</Button>
+        </div>
       </div>
 
       {/* Save Race Dialog */}
