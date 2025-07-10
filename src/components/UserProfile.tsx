@@ -77,6 +77,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onClose }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
   const [showAddNutrition, setShowAddNutrition] = useState(false);
   const [newNutritionItem, setNewNutritionItem] = useState({
     name: "",
@@ -98,8 +99,10 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onClose }) => {
             loadSavedRaces(),
             loadSavedNutrition(),
           ]);
+          setHasError(false);
         } catch (error) {
           console.error("Error loading user data:", error);
+          setHasError(true);
         } finally {
           setIsInitialLoading(false);
         }
@@ -154,6 +157,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onClose }) => {
         gender: undefined,
         location: undefined,
       });
+      throw error; // Re-throw to be caught by the main error handler
     }
   };
 
@@ -169,6 +173,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onClose }) => {
       setSavedRaces(data || []);
     } catch (error) {
       console.error("Error loading saved races:", error);
+      setSavedRaces([]);
     }
   };
 
@@ -184,6 +189,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onClose }) => {
       setSavedNutrition(data || []);
     } catch (error) {
       console.error("Error loading saved nutrition:", error);
+      setSavedNutrition([]);
     }
   };
 
@@ -310,25 +316,36 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onClose }) => {
 
   if (isInitialLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading profile...</p>
+      <div className="bg-background p-4">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Loading profile...</p>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
-  if (!profile) {
+  if (hasError || !profile) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-muted-foreground">
-            Unable to load profile. Please try refreshing the page.
-          </p>
-          <Button onClick={() => window.location.reload()} className="mt-4">
-            Refresh Page
-          </Button>
+      <div className="bg-background p-4">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <p className="text-muted-foreground mb-4">
+                {hasError
+                  ? "Error loading profile data."
+                  : "Unable to load profile."}{" "}
+                Please try refreshing the page.
+              </p>
+              <Button onClick={() => window.location.reload()}>
+                Refresh Page
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
     );
