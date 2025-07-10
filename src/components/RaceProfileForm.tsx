@@ -74,9 +74,9 @@ const RaceProfileForm: React.FC<RaceProfileFormProps> = ({
   const [startTime, setStartTime] = useState<string>("");
   const [distance, setDistance] = useState<string>("");
   const [elevationGain, setElevationGain] = useState<string>("");
-  const [hours, setHours] = useState<string>("");
-  const [minutes, setMinutes] = useState<string>("");
-  const [seconds, setSeconds] = useState<string>("");
+  const [estimatedHours, setEstimatedHours] = useState<string>("");
+  const [estimatedMinutes, setEstimatedMinutes] = useState<string>("");
+  const [estimatedSeconds, setEstimatedSeconds] = useState<string>("");
 
   const [unitPreferences, setUnitPreferences] = useState<UnitPreferences>(
     defaultUnitPreferences,
@@ -122,11 +122,11 @@ const RaceProfileForm: React.FC<RaceProfileFormProps> = ({
     setDistance(savedRace.distance.toString());
     setElevationGain(savedRace.elevation_gain.toString());
 
-    // Parse estimated time
+    // Set estimated time - parse HH:MM:SS format
     const timeParts = savedRace.estimated_time.split(":");
-    setHours(timeParts[0] || "0");
-    setMinutes(timeParts[1] || "0");
-    setSeconds(timeParts[2] || "0");
+    setEstimatedHours(timeParts[0] || "");
+    setEstimatedMinutes(timeParts[1] || "");
+    setEstimatedSeconds(timeParts[2] || "");
 
     setUnitPreferences(savedRace.unit_preferences || defaultUnitPreferences);
     setShowLoadDialog(false);
@@ -153,11 +153,9 @@ const RaceProfileForm: React.FC<RaceProfileFormProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Format the time as HH:MM:SS
-    const formattedHours = hours.padStart(2, "0");
-    const formattedMinutes = minutes.padStart(2, "0");
-    const formattedSeconds = seconds.padStart(2, "0");
-    const estimatedTime = `${formattedHours}:${formattedMinutes}:${formattedSeconds}`;
+
+    // Combine time components into HH:MM:SS format
+    const estimatedTime = `${estimatedHours.padStart(2, "0")}:${estimatedMinutes.padStart(2, "0")}:${estimatedSeconds.padStart(2, "0")}`;
 
     const raceProfile: RaceProfile = {
       raceName,
@@ -362,69 +360,63 @@ const RaceProfileForm: React.FC<RaceProfileFormProps> = ({
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="estimatedTime">Estimated Completion Time</Label>
-              <div className="flex gap-2">
+              <Label>Estimated Completion Time</Label>
+              <div className="flex gap-2 items-center">
                 <div className="flex-1">
-                  <Label htmlFor="hours" className="text-xs">
-                    Hours
-                  </Label>
                   <Input
-                    id="hours"
-                    placeholder="HH"
-                    value={hours}
+                    id="estimatedHours"
+                    placeholder="Hours"
+                    value={estimatedHours}
                     onChange={(e) => {
                       const value = e.target.value;
-                      // Only allow numbers and limit to 2 digits
                       if (/^\d{0,2}$/.test(value)) {
-                        setHours(value);
+                        setEstimatedHours(value);
                       }
                     }}
+                    maxLength={2}
                     required
-                    className="mt-1"
                   />
                 </div>
+                <span className="text-muted-foreground flex items-center justify-center">
+                  :
+                </span>
                 <div className="flex-1">
-                  <Label htmlFor="minutes" className="text-xs">
-                    Minutes
-                  </Label>
                   <Input
-                    id="minutes"
-                    placeholder="MM"
-                    value={minutes}
+                    id="estimatedMinutes"
+                    placeholder="Minutes"
+                    value={estimatedMinutes}
                     onChange={(e) => {
                       const value = e.target.value;
-                      // Only allow numbers and limit to 2 digits and max value of 59
                       if (
                         /^\d{0,2}$/.test(value) &&
-                        (parseInt(value) <= 59 || value === "")
+                        parseInt(value || "0") <= 59
                       ) {
-                        setMinutes(value);
+                        setEstimatedMinutes(value);
                       }
                     }}
+                    maxLength={2}
                     required
-                    className="mt-1"
                   />
                 </div>
+                <span className="text-muted-foreground flex items-center justify-center">
+                  :
+                </span>
                 <div className="flex-1">
-                  <Label htmlFor="seconds" className="text-xs">
-                    Seconds
-                  </Label>
                   <Input
-                    id="seconds"
-                    placeholder="SS"
-                    value={seconds}
+                    id="estimatedSeconds"
+                    placeholder="Seconds"
+                    value={estimatedSeconds}
                     onChange={(e) => {
                       const value = e.target.value;
-                      // Only allow numbers and limit to 2 digits and max value of 59
                       if (
                         /^\d{0,2}$/.test(value) &&
-                        (parseInt(value) <= 59 || value === "")
+                        parseInt(value || "0") <= 59
                       ) {
-                        setSeconds(value);
+                        setEstimatedSeconds(value);
                       }
                     }}
+                    maxLength={2}
                     required
-                    className="mt-1"
                   />
                 </div>
               </div>
