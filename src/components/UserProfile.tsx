@@ -91,6 +91,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onClose }) => {
 
   useEffect(() => {
     if (user) {
+      console.log("UserProfile useEffect triggered with user:", user);
       const loadAllData = async () => {
         setIsInitialLoading(true);
         setHasError(false);
@@ -102,7 +103,8 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onClose }) => {
           await Promise.allSettled([loadSavedRaces(), loadSavedNutrition()]);
         } catch (error) {
           console.error("Error loading user data:", error);
-          setHasError(true);
+          // Don't set hasError to true, just log the error
+          // setHasError(true);
         } finally {
           setIsInitialLoading(false);
         }
@@ -113,11 +115,14 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onClose }) => {
 
   const loadUserProfile = async () => {
     try {
+      console.log("Loading user profile for user ID:", user.id);
       const { data, error } = await supabase
         .from("user_profiles")
         .select("*")
         .eq("user_id", user.id)
         .single();
+
+      console.log("Profile query result:", { data, error });
 
       if (error && error.code !== "PGRST116") {
         console.error("Error loading user profile:", error);
@@ -125,17 +130,19 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onClose }) => {
       }
 
       if (data) {
+        console.log("Setting profile from database:", data);
         setProfile({
           id: data.id,
-          firstName: data.first_name,
-          lastName: data.last_name,
-          email: data.email,
+          firstName: data.first_name || "",
+          lastName: data.last_name || "",
+          email: data.email || user.email || "",
           age: data.age,
           gender: data.gender,
           location: data.location,
         });
       } else {
         // No profile found, create a default one for display
+        console.log("No profile found, creating default profile");
         setProfile({
           id: "",
           firstName: "",
@@ -329,24 +336,25 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onClose }) => {
     );
   }
 
-  if (hasError) {
-    return (
-      <div className="bg-background p-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex items-center justify-center py-12">
-            <div className="text-center">
-              <p className="text-muted-foreground mb-4">
-                Error loading profile data. Please try refreshing the page.
-              </p>
-              <Button onClick={() => window.location.reload()}>
-                Refresh Page
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Temporarily disable error state to debug
+  // if (hasError) {
+  //   return (
+  //     <div className="bg-background p-4">
+  //       <div className="max-w-4xl mx-auto">
+  //         <div className="flex items-center justify-center py-12">
+  //           <div className="text-center">
+  //             <p className="text-muted-foreground mb-4">
+  //               Error loading profile data. Please try refreshing the page.
+  //             </p>
+  //             <Button onClick={() => window.location.reload()}>
+  //               Refresh Page
+  //             </Button>
+  //           </div>
+  //         </div>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   if (!profile) {
     return (

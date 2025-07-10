@@ -45,12 +45,18 @@ const SaveRaceDialog: React.FC<SaveRaceDialogProps> = ({
     setError(null);
 
     try {
-      const { error } = await supabase.from("saved_race_reports").insert({
+      // Save to the saved_races table to match what RaceProfileForm expects
+      const { error } = await supabase.from("saved_races").insert({
         user_id: user.id,
         race_name: raceName.trim(),
-        race_profile: raceProfile,
-        nutrition_plan: nutritionPlan,
+        race_date: raceProfile.raceDate,
+        start_time: raceProfile.startTime,
+        distance: parseFloat(raceProfile.distance),
+        elevation_gain: parseFloat(raceProfile.elevationGain),
+        estimated_time: raceProfile.estimatedTime,
+        unit_preferences: raceProfile.unitPreferences,
         aid_stations: aidStations,
+        nutrition_plan: nutritionPlan,
       });
 
       if (error) throw error;

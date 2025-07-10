@@ -336,7 +336,13 @@ export default function Home() {
       <div className="container mx-auto px-4 py-8">
         <header className="flex justify-between items-center mb-8">
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-3">
+            <div
+              className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={() => {
+                handleStartOver();
+                setCurrentStep("race-details");
+              }}
+            >
               <img
                 src="/ultrasherpa-icon.png"
                 alt="UltraSherpa"
