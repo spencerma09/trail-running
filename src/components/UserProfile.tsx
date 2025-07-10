@@ -93,13 +93,13 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onClose }) => {
     if (user) {
       const loadAllData = async () => {
         setIsInitialLoading(true);
+        setHasError(false);
+
         try {
-          await Promise.all([
-            loadUserProfile(),
-            loadSavedRaces(),
-            loadSavedNutrition(),
-          ]);
-          setHasError(false);
+          // Load profile first, then other data
+          await loadUserProfile();
+          // Load other data in parallel, but don't let failures block the UI
+          await Promise.allSettled([loadSavedRaces(), loadSavedNutrition()]);
         } catch (error) {
           console.error("Error loading user data:", error);
           setHasError(true);
@@ -120,7 +120,8 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onClose }) => {
         .single();
 
       if (error && error.code !== "PGRST116") {
-        throw error;
+        console.error("Error loading user profile:", error);
+        // Don't throw, just set default profile
       }
 
       if (data) {
@@ -157,7 +158,6 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onClose }) => {
         gender: undefined,
         location: undefined,
       });
-      throw error; // Re-throw to be caught by the main error handler
     }
   };
 
@@ -329,21 +329,33 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onClose }) => {
     );
   }
 
-  if (hasError || !profile) {
+  if (hasError) {
     return (
       <div className="bg-background p-4">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
               <p className="text-muted-foreground mb-4">
-                {hasError
-                  ? "Error loading profile data."
-                  : "Unable to load profile."}{" "}
-                Please try refreshing the page.
+                Error loading profile data. Please try refreshing the page.
               </p>
               <Button onClick={() => window.location.reload()}>
                 Refresh Page
               </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="bg-background p-4">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Loading profile...</p>
             </div>
           </div>
         </div>
