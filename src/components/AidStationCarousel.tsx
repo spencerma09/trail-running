@@ -87,6 +87,7 @@ interface AidStationCarouselProps {
   onNext: (stationsWithTiming: AidStationWithTiming[]) => void;
   onBack: () => void;
   preloadedStations?: AidStationWithTiming[];
+  onAidStationsChange?: (stations: AidStationWithTiming[]) => void;
 }
 
 const AidStationCarousel: React.FC<AidStationCarouselProps> = ({
@@ -98,6 +99,7 @@ const AidStationCarousel: React.FC<AidStationCarouselProps> = ({
   onNext,
   onBack,
   preloadedStations,
+  onAidStationsChange,
 }) => {
   const [currentStationIndex, setCurrentStationIndex] = useState(0);
   const [user, setUser] = useState<any>(null);
@@ -282,16 +284,18 @@ const AidStationCarousel: React.FC<AidStationCarouselProps> = ({
     if (isStartStation) {
       setStartStationItems((prev) => [...prev, newItem]);
     } else {
-      setStationsWithTiming((prev) =>
-        prev.map((station, index) =>
-          index === currentStationIndex - 1
-            ? {
-                ...station,
-                nutritionItems: [...station.nutritionItems, newItem],
-              }
-            : station,
-        ),
+      const updatedStations = stationsWithTiming.map((station, index) =>
+        index === currentStationIndex - 1
+          ? {
+              ...station,
+              nutritionItems: [...station.nutritionItems, newItem],
+            }
+          : station,
       );
+      setStationsWithTiming(updatedStations);
+      if (onAidStationsChange) {
+        onAidStationsChange(updatedStations);
+      }
     }
     setShowLoadFoodDialog(false);
   };
@@ -309,16 +313,18 @@ const AidStationCarousel: React.FC<AidStationCarouselProps> = ({
     if (isStartStation) {
       setStartStationItems((prev) => [...prev, newItem]);
     } else {
-      setStationsWithTiming((prev) =>
-        prev.map((station, index) =>
-          index === currentStationIndex - 1
-            ? {
-                ...station,
-                nutritionItems: [...station.nutritionItems, newItem],
-              }
-            : station,
-        ),
+      const updatedStations = stationsWithTiming.map((station, index) =>
+        index === currentStationIndex - 1
+          ? {
+              ...station,
+              nutritionItems: [...station.nutritionItems, newItem],
+            }
+          : station,
       );
+      setStationsWithTiming(updatedStations);
+      if (onAidStationsChange) {
+        onAidStationsChange(updatedStations);
+      }
     }
     setShowLoadFoodDialog(false);
   };
@@ -344,13 +350,15 @@ const AidStationCarousel: React.FC<AidStationCarouselProps> = ({
       // Handle start station timing update if needed
       return;
     }
-    setStationsWithTiming((prev) =>
-      prev.map((station, index) =>
-        index === currentStationIndex - 1
-          ? { ...station, [field]: value }
-          : station,
-      ),
+    const updatedStations = stationsWithTiming.map((station, index) =>
+      index === currentStationIndex - 1
+        ? { ...station, [field]: value }
+        : station,
     );
+    setStationsWithTiming(updatedStations);
+    if (onAidStationsChange) {
+      onAidStationsChange(updatedStations);
+    }
   };
 
   const updateStationNutrition = (
@@ -358,19 +366,21 @@ const AidStationCarousel: React.FC<AidStationCarouselProps> = ({
     value: number,
   ) => {
     if (isStartStation) return;
-    setStationsWithTiming((prev) =>
-      prev.map((station, index) =>
-        index === currentStationIndex - 1
-          ? {
-              ...station,
-              nutritionNeeded: {
-                ...station.nutritionNeeded,
-                [field]: value,
-              },
-            }
-          : station,
-      ),
+    const updatedStations = stationsWithTiming.map((station, index) =>
+      index === currentStationIndex - 1
+        ? {
+            ...station,
+            nutritionNeeded: {
+              ...station.nutritionNeeded,
+              [field]: value,
+            },
+          }
+        : station,
     );
+    setStationsWithTiming(updatedStations);
+    if (onAidStationsChange) {
+      onAidStationsChange(updatedStations);
+    }
   };
 
   const addNutritionItem = () => {
@@ -386,16 +396,18 @@ const AidStationCarousel: React.FC<AidStationCarouselProps> = ({
     if (isStartStation) {
       setStartStationItems((prev) => [...prev, newItem]);
     } else {
-      setStationsWithTiming((prev) =>
-        prev.map((station, index) =>
-          index === currentStationIndex - 1
-            ? {
-                ...station,
-                nutritionItems: [...station.nutritionItems, newItem],
-              }
-            : station,
-        ),
+      const updatedStations = stationsWithTiming.map((station, index) =>
+        index === currentStationIndex - 1
+          ? {
+              ...station,
+              nutritionItems: [...station.nutritionItems, newItem],
+            }
+          : station,
       );
+      setStationsWithTiming(updatedStations);
+      if (onAidStationsChange) {
+        onAidStationsChange(updatedStations);
+      }
     }
   };
 
@@ -411,18 +423,20 @@ const AidStationCarousel: React.FC<AidStationCarouselProps> = ({
         ),
       );
     } else {
-      setStationsWithTiming((prev) =>
-        prev.map((station, index) =>
-          index === currentStationIndex - 1
-            ? {
-                ...station,
-                nutritionItems: station.nutritionItems.map((item) =>
-                  item.id === itemId ? { ...item, [field]: value } : item,
-                ),
-              }
-            : station,
-        ),
+      const updatedStations = stationsWithTiming.map((station, index) =>
+        index === currentStationIndex - 1
+          ? {
+              ...station,
+              nutritionItems: station.nutritionItems.map((item) =>
+                item.id === itemId ? { ...item, [field]: value } : item,
+              ),
+            }
+          : station,
       );
+      setStationsWithTiming(updatedStations);
+      if (onAidStationsChange) {
+        onAidStationsChange(updatedStations);
+      }
     }
   };
 
@@ -430,18 +444,20 @@ const AidStationCarousel: React.FC<AidStationCarouselProps> = ({
     if (isStartStation) {
       setStartStationItems((prev) => prev.filter((item) => item.id !== itemId));
     } else {
-      setStationsWithTiming((prev) =>
-        prev.map((station, index) =>
-          index === currentStationIndex - 1
-            ? {
-                ...station,
-                nutritionItems: station.nutritionItems.filter(
-                  (item) => item.id !== itemId,
-                ),
-              }
-            : station,
-        ),
+      const updatedStations = stationsWithTiming.map((station, index) =>
+        index === currentStationIndex - 1
+          ? {
+              ...station,
+              nutritionItems: station.nutritionItems.filter(
+                (item) => item.id !== itemId,
+              ),
+            }
+          : station,
       );
+      setStationsWithTiming(updatedStations);
+      if (onAidStationsChange) {
+        onAidStationsChange(updatedStations);
+      }
     }
   };
 

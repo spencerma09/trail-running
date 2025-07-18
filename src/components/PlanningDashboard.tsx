@@ -19,6 +19,8 @@ interface RaceDetails {
 
 interface PlanningDashboardProps {
   raceDetails?: RaceDetails;
+  preloadedAidStations?: any[];
+  preloadedNutritionPlan?: any;
 }
 
 // Helper function to parse HH:MM:SS to hours as a number
@@ -45,9 +47,17 @@ const PlanningDashboard: React.FC<PlanningDashboardProps> = ({
       weight: "metric",
     },
   },
+  preloadedAidStations,
+  preloadedNutritionPlan,
 }) => {
   const [activeTab, setActiveTab] = useState("nutrition");
   const [darkMode, setDarkMode] = useState(false);
+  const [savedAidStations, setSavedAidStations] = useState<any[] | null>(
+    preloadedAidStations || null,
+  );
+  const [savedNutritionPlan, setSavedNutritionPlan] = useState<any | null>(
+    preloadedNutritionPlan || null,
+  );
 
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
@@ -149,8 +159,10 @@ const PlanningDashboard: React.FC<PlanningDashboardProps> = ({
             raceDistance={raceDetails.distance}
             elevationGain={raceDetails.elevationGain}
             estimatedTime={parseEstimatedTimeToHours(raceDetails.estimatedTime)}
-            aidStations={raceDetails.aidStations}
+            aidStations={savedAidStations || raceDetails.aidStations}
             unitPreferences={raceDetails.unitPreferences}
+            onNutritionPlanChange={setSavedNutritionPlan}
+            preloadedNutritionPlan={savedNutritionPlan}
           />
         </TabsContent>
 
@@ -160,6 +172,7 @@ const PlanningDashboard: React.FC<PlanningDashboardProps> = ({
             elevationGain={raceDetails.elevationGain}
             estimatedTime={parseEstimatedTimeToHours(raceDetails.estimatedTime)}
             unitPreferences={raceDetails.unitPreferences}
+            aidStations={savedAidStations || raceDetails.aidStations}
           />
         </TabsContent>
 
