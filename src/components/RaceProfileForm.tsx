@@ -45,7 +45,11 @@ import {
 } from "@/components/ui/alert-dialog";
 
 interface RaceProfileFormProps {
-  onSubmit?: (raceProfile: RaceProfile) => void;
+  onSubmit?: (
+    raceProfile: RaceProfile,
+    aidStations?: any[],
+    nutritionPlan?: any,
+  ) => void;
   onSave?: (raceProfile: RaceProfile) => void;
 }
 
@@ -80,6 +84,14 @@ const RaceProfileForm: React.FC<RaceProfileFormProps> = ({
 
   const [unitPreferences, setUnitPreferences] = useState<UnitPreferences>(
     defaultUnitPreferences,
+  );
+
+  // Store loaded aid stations and nutrition plan
+  const [loadedAidStations, setLoadedAidStations] = useState<any[] | null>(
+    null,
+  );
+  const [loadedNutritionPlan, setLoadedNutritionPlan] = useState<any | null>(
+    null,
   );
 
   useEffect(() => {
@@ -129,6 +141,11 @@ const RaceProfileForm: React.FC<RaceProfileFormProps> = ({
     setEstimatedSeconds(timeParts[2] || "");
 
     setUnitPreferences(savedRace.unit_preferences || defaultUnitPreferences);
+
+    // Load aid stations and nutrition plan
+    setLoadedAidStations(savedRace.aid_stations || null);
+    setLoadedNutritionPlan(savedRace.nutrition_plan || null);
+
     setShowLoadDialog(false);
   };
 
@@ -167,7 +184,9 @@ const RaceProfileForm: React.FC<RaceProfileFormProps> = ({
 
       unitPreferences,
     };
-    onSubmit(raceProfile);
+
+    // Pass loaded aid stations and nutrition plan if available
+    onSubmit(raceProfile, loadedAidStations, loadedNutritionPlan);
   };
 
   return (

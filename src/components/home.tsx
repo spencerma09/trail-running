@@ -13,6 +13,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "./ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "./ui/alert-dialog";
 import RaceProfileForm, {
   RaceProfile as RaceProfileType,
 } from "./RaceProfileForm";
@@ -68,6 +76,7 @@ export default function Home() {
   const [password, setPassword] = useState("");
   const [isAuthLoading, setIsAuthLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [showEmailConfirmDialog, setShowEmailConfirmDialog] = useState(false);
 
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
@@ -188,15 +197,16 @@ export default function Home() {
 
         // Check if email confirmation is required
         if (data.user && !data.session) {
-          setAuthError(
-            "Please check your email and click the confirmation link to complete your registration.",
-          );
+          setShowAuthDialog(false);
+          setShowEmailConfirmDialog(true);
+          setEmail("");
+          setPassword("");
         } else {
           setAuthError("Account created successfully! You can now sign in.");
+          setShowAuthDialog(false);
+          setEmail("");
+          setPassword("");
         }
-        setShowAuthDialog(false);
-        setEmail("");
-        setPassword("");
       } else if (authMode === "reset") {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
           redirectTo: window.location.origin,
@@ -695,6 +705,26 @@ export default function Home() {
       {needsProfileSetup && user && (
         <UserProfileSetup user={user} onComplete={handleProfileSetupComplete} />
       )}
+
+      {/* Email Confirmation Dialog */}
+      <AlertDialog
+        open={showEmailConfirmDialog}
+        onOpenChange={setShowEmailConfirmDialog}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Check Your Email</AlertDialogTitle>
+            <AlertDialogDescription>
+              We've sent you a confirmation email. Please check your inbox and
+              click the confirmation link to activate your account. Once
+              confirmed, you'll be automatically signed in.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogAction onClick={() => setShowEmailConfirmDialog(false)}>
+            Got it!
+          </AlertDialogAction>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

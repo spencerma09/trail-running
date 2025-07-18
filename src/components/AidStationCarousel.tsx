@@ -86,6 +86,7 @@ interface AidStationCarouselProps {
   unitPreferences: UnitPreferences;
   onNext: (stationsWithTiming: AidStationWithTiming[]) => void;
   onBack: () => void;
+  preloadedStations?: AidStationWithTiming[];
 }
 
 const AidStationCarousel: React.FC<AidStationCarouselProps> = ({
@@ -96,6 +97,7 @@ const AidStationCarousel: React.FC<AidStationCarouselProps> = ({
   unitPreferences,
   onNext,
   onBack,
+  preloadedStations,
 }) => {
   const [currentStationIndex, setCurrentStationIndex] = useState(0);
   const [user, setUser] = useState<any>(null);
@@ -127,6 +129,11 @@ const AidStationCarousel: React.FC<AidStationCarouselProps> = ({
   const [stationsWithTiming, setStationsWithTiming] = useState<
     AidStationWithTiming[]
   >(() => {
+    // If we have preloaded stations, use them
+    if (preloadedStations && preloadedStations.length > 0) {
+      return preloadedStations;
+    }
+
     return aidStations.map((station, index) => {
       // Calculate estimated time based on distance progression
       const estimatedTime = (station.distance / totalDistance) * totalTime;
@@ -152,7 +159,17 @@ const AidStationCarousel: React.FC<AidStationCarouselProps> = ({
   });
 
   const [startStationItems, setStartStationItems] = useState<NutritionItem[]>(
-    [],
+    () => {
+      // If we have preloaded stations, get the start station items
+      if (preloadedStations && preloadedStations.length > 0) {
+        // Find the start station in preloaded data
+        const startStationData = preloadedStations.find(
+          (s) => s.distance === 0,
+        );
+        return startStationData?.nutritionItems || [];
+      }
+      return [];
+    },
   );
 
   useEffect(() => {

@@ -9,7 +9,68 @@ const AuthCallback = () => {
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
-        // Handle the OAuth callback
+        // First, try to get the session from the URL hash/query params
+        const { data: sessionData, error: sessionError } =
+          await supabase.auth.getSession();
+
+        if (sessionError) {
+          console.error("Session error:", sessionError);
+        }
+
+        // If we have a session, the user is already authenticated
+        if (sessionData.session) {
+          console.log("User already authenticated:", sessionData.session.user);
+          setTimeout(() => {
+            navigate("/");
+          }, 1000);
+          return;
+        }
+
+        // Check if this is an email confirmation callback
+        const urlParams = new URLSearchParams(window.location.search);
+        const accessToken = urlParams.get("access_token");
+        const refreshToken = urlParams.get("refresh_token");
+        const type = urlParams.get("type");
+
+        // Also check the hash for tokens (some OAuth providers use hash)
+        const hashParams = new URLSearchParams(
+          window.location.hash.substring(1),
+        );
+        const hashAccessToken = hashParams.get("access_token");
+        const hashRefreshToken = hashParams.get("refresh_token");
+        const hashType = hashParams.get("type");
+
+        const finalAccessToken = accessToken || hashAccessToken;
+        const finalRefreshToken = refreshToken || hashRefreshToken;
+        const finalType = type || hashType;
+
+        if (finalAccessToken && finalType === "signup") {
+          // This is an email confirmation, set the session
+          const { data: authData, error: authError } =
+            await supabase.auth.setSession({
+              access_token: finalAccessToken,
+              refresh_token: finalRefreshToken || "",
+            });
+
+          if (authError) {
+            console.error("Error setting session:", authError);
+            navigate("/");
+            return;
+          }
+
+          if (authData.session) {
+            console.log(
+              "Email confirmation successful, user logged in:",
+              authData.session.user,
+            );
+            setTimeout(() => {
+              navigate("/");
+            }, 1000);
+            return;
+          }
+        }
+
+        // For other OAuth callbacks, try to get the session normally
         const { data, error } = await supabase.auth.getSession();
 
         if (error) {
@@ -20,7 +81,6 @@ const AuthCallback = () => {
 
         if (data.session) {
           console.log("OAuth successful:", data.session.user);
-          // Wait a moment for the auth state to propagate
           setTimeout(() => {
             navigate("/");
           }, 1000);
